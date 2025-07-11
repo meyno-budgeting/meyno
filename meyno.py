@@ -11,4 +11,20 @@ SCRIPT_DIR = Path(__file__).parent
 # Makes a database called budget.meyno (if it doesn't exist) and connects to it
 con = sqlite3.connect("budget.meyno")
 
+# Make a cursor to actually interact with database
+cur = con.cursor()
+
+# For now, just make an "expenses" table (will split out into account creation later)
+cur.execute("""
+    CREATE TABLE IF NOT EXISTS expenses(
+        id,
+        date,
+        payee,
+        amount,
+        memo
+        )
+    """)
+
+
+
 con.close()
