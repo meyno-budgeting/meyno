@@ -23,7 +23,7 @@ class Transaction:
         self.id: str = str(uuid.uuid4())
     
     def formattedDate(self) -> str:
-        return self.date.strftime(Transaction.dateFormat)
+        return self.date.strftime(format=Transaction.dateFormat)
     
     def __str__(self) -> str:
         emptyStringStr = "\'\'"
@@ -32,7 +32,7 @@ class Transaction:
         categoryStr = self.category if self.category else emptyStringStr
         memoStr = self.memo if self.memo else emptyStringStr
         
-        return f"Date: {self.formattedDate()} Payee: {payeeStr} Category: {categoryStr} Amount: {self.amount:.2f} Memo: {memoStr}"
+        return f"Date: {self.formattedDate()} Payee: {payeeStr} Category: {categoryStr} Amount: ${self.amount:.2f} Memo: {memoStr}"
 
     def __repr__(self) -> str:
         return f"Transaction({self.__dict__})"

@@ -5,15 +5,19 @@ from core.transaction import Transaction
 from core.account import Account
 
 def main():
-    txns = []
-    a = Account("Hello", transactions=txns)
-    txns.append(Transaction(dt.today().date(), amount=73.83))
+    txns: list[Transaction] = []
+    txns.append(Transaction(date=dt.today().date(), amount=73.83))
+    txns.append(Transaction(date=dt.today().date(), amount=81.67))
+    txns.append(Transaction(date=dt.today().date(), amount=169.32,memo="Groceries"))
 
-    # t1 = Transaction(dt.today(), amount=73.83)
-    # a.add_transaction(Transaction(dt.today(), amount=73.83))
 
-    print(a.name)
-    print(a.balance)
+    a = Account(name="Hello", transactions=txns)
+
+    id = a.transactions[0].id
+    txn = a.get_transaction(id=id)
+    print(txn)
+    
+    print(a.transactions)
 
 
 if __name__ == "__main__":

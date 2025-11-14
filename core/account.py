@@ -13,6 +13,9 @@ class Account:
     def add_transaction(self, txn: Transaction) -> None:
         self.transactions.append(txn)
 
-    def get_transaction(self, uuid) -> Transaction:
-        
+    def get_transaction(self, id) -> Transaction | None:
+        for txn in self.transactions:
+            if txn.id == id:
+                return txn
         return
+    
