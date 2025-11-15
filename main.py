@@ -13,16 +13,21 @@ def main():
 
     # print(str(txns[0])+'\n\n')
 
-    a = Account(name="Account", transactions=txns)
+    a = Account(name="Checking Account", transactions=txns)
     txn_to_add = Transaction(date="12/04/2025",payee="Nintendo", amount=9.99*1.055, memo="MP4 Switch 2 Upgrade")
     a.add_transaction(txn_to_add)
-    # print(a)
 
     id = a.transactions[0].id
+    txn = a.get_transaction(id=id)
+    print(txn)
     txn = a.get_transaction(id="615662")
     print(txn)
     
-    # print(a.transactions)
+    print(a)
+    
+    a.delete_transaction(id)
+    
+    print(a)
 
 
 if __name__ == "__main__":

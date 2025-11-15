@@ -4,9 +4,9 @@ from .transaction import Transaction
 
 class Account:
     def __init__(self, name: str, transactions: list[Transaction]=[]) -> None:
-       self.name = name
-       self.transactions = transactions[:]
-       self._id_map = {tx.id: tx for tx in self.transactions}
+       self.name: str = name
+       self.transactions: list[Transaction] = transactions[:]
+       self._id_map: dict[str, Transaction] = {tx.id: tx for tx in self.transactions}
        
     @property
     def balance(self) -> float:
@@ -15,9 +15,18 @@ class Account:
     def add_transaction(self, txn: Transaction) -> None:
         self.transactions.append(txn)
         self._id_map[txn.id] = txn
+        
+    def delete_transaction(self, id) -> None:
+        txn = self.get_transaction(id=id)
+        
+        if txn is not None:
+            self.transactions.remove(txn)
+            del self._id_map[id]
+        
+        return
 
     def get_transaction(self, id) -> Transaction | None:
-        return self._id_map.get(id)
+        return self._id_map.get(id, None)
 
     def __str__(self):
         sorted_transactions = sorted(self.transactions, key=lambda t: t.date.isoformat(), reverse=True)
