@@ -7,17 +7,20 @@ from core.account import Account
 def main():
     txns: list[Transaction] = []
     txns.append(Transaction(date=dt.today().date(), amount=73.83))
-    txns.append(Transaction(date=dt.today().date(), amount=81.67))
-    txns.append(Transaction(date=dt.today().date(), amount=169.32,memo="Groceries"))
+    txns.append(Transaction(date=dt.today().date(), amount=81.67, payee="Utilities"))
+    txns.append(Transaction(date=dt.today().date(), amount=169.32, memo="Groceries"))
 
 
-    a = Account(name="Hello", transactions=txns)
+    print(str(txns[0])+'\n\n')
 
-    id = a.transactions[0].id
-    txn = a.get_transaction(id=id)
-    print(txn)
+    a = Account(name="Account", transactions=txns)
+    print(a)
+
+    # id = a.transactions[0].id
+    # txn = a.get_transaction(id=id)
+    # print(txn)
     
-    print(a.transactions)
+    # print(a.transactions)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 
+from tabulate import tabulate
 from .transaction import Transaction
 
 class Account:
@@ -18,4 +19,15 @@ class Account:
             if txn.id == id:
                 return txn
         return
-    
+
+    def __str__(self):
+        table_headers = ["Date", "Payee", "Category", "Amount", "Memo"]
+        table_data = [[t.formattedDate(), t.payee, t.category, f"${t.amount:.2f}", t.memo] for t in self.transactions]
+
+        out = [
+            f"Account: {self.name}",
+            f"Balance: ${self.balance:.2f}\n",
+            tabulate(table_data, headers=table_headers, tablefmt="simple", stralign="left")
+        ]
+
+        return "\n".join(out)
