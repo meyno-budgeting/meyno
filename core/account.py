@@ -21,8 +21,9 @@ class Account:
         return
 
     def __str__(self):
+        sorted_transactions = sorted(self.transactions, key=lambda t: t.date.isoformat(), reverse=True)
         table_headers = ["Date", "Payee", "Category", "Amount", "Memo"]
-        table_data = [[t.formattedDate(), t.payee, t.category, f"${t.amount:.2f}", t.memo] for t in self.transactions]
+        table_data = [[t.formattedDate(), t.payee, t.category, f"${t.amount:.2f}", t.memo] for t in sorted_transactions]
 
         out = [
             f"Account: {self.name}",
