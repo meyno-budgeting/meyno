@@ -16,11 +16,11 @@ def main():
     a = Account(name="Account", transactions=txns)
     txn_to_add = Transaction(date="12/04/2025",payee="Nintendo", amount=9.99*1.055, memo="MP4 Switch 2 Upgrade")
     a.add_transaction(txn_to_add)
-    print(a)
+    # print(a)
 
-    # id = a.transactions[0].id
-    # txn = a.get_transaction(id=id)
-    # print(txn)
+    id = a.transactions[0].id
+    txn = a.get_transaction(id="615662")
+    print(txn)
     
     # print(a.transactions)
 

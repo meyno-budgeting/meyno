@@ -6,6 +6,7 @@ class Account:
     def __init__(self, name: str, transactions: list[Transaction]=[]) -> None:
        self.name = name
        self.transactions = transactions[:]
+       self._id_map = {tx.id: tx for tx in self.transactions}
        
     @property
     def balance(self) -> float:
@@ -13,12 +14,10 @@ class Account:
     
     def add_transaction(self, txn: Transaction) -> None:
         self.transactions.append(txn)
+        self._id_map[txn.id] = txn
 
     def get_transaction(self, id) -> Transaction | None:
-        for txn in self.transactions:
-            if txn.id == id:
-                return txn
-        return
+        return self._id_map.get(id)
 
     def __str__(self):
         sorted_transactions = sorted(self.transactions, key=lambda t: t.date.isoformat(), reverse=True)
