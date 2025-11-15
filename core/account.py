@@ -27,7 +27,10 @@ class Account:
         out = [
             f"Account: {self.name}",
             f"Balance: ${self.balance:.2f}\n",
-            tabulate(table_data, headers=table_headers, tablefmt="simple", stralign="left")
+            tabulate(table_data, headers=table_headers, tablefmt="simple")
         ]
 
         return "\n".join(out)
+    
+    def __repr__(self) -> str:
+        return f"Account({self.__dict__})"
