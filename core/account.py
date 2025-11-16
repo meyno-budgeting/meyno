@@ -1,11 +1,12 @@
 
+from bisect import insort
 from tabulate import tabulate
 from .transaction import Transaction
 
 class Account:
     def __init__(self, name: str, transactions: list[Transaction]=[]) -> None:
        self.name: str = name
-       self.transactions: list[Transaction] = transactions[:]
+       self.transactions: list[Transaction] = sorted(transactions, key=lambda t: t.date)
        self._id_map: dict[str, Transaction] = {tx.id: tx for tx in self.transactions}
        
     @property
@@ -13,7 +14,7 @@ class Account:
         return sum(txn.amount for txn in self.transactions)
     
     def add_transaction(self, txn: Transaction) -> None:
-        self.transactions.append(txn)
+        insort(self.transactions, txn, key=lambda t: t.date)
         self._id_map[txn.id] = txn
         
     def delete_transaction(self, id) -> None:
@@ -28,10 +29,10 @@ class Account:
     def get_transaction(self, id) -> Transaction | None:
         return self._id_map.get(id, None)
 
-    def __str__(self):
-        sorted_transactions = sorted(self.transactions, key=lambda t: t.date.isoformat(), reverse=True)
+    def __str__(self) -> str:
+        # sorted_transactions = sorted(self.transactions, key=lambda t: t.date.isoformat(), reverse=True)
         table_headers = ["Date", "Payee", "Category", "Amount", "Memo"]
-        table_data = [[t.formattedDate(), t.payee, t.category, f"${t.amount:.2f}", t.memo] for t in sorted_transactions]
+        table_data = [[t.formattedDate(), t.payee, t.category, f"${t.amount:.2f}", t.memo] for t in self.transactions[::-1]]
 
         out = [
             f"Account: {self.name}",
@@ -43,3 +44,6 @@ class Account:
     
     def __repr__(self) -> str:
         return f"Account({self.__dict__})"
+    
+    def __len__(self):
+        return len(self.transactions)
