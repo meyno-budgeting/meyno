@@ -1,3 +1,4 @@
+from turtle import back
 from typing import List, Optional
 from decimal import Decimal
 
@@ -17,7 +18,6 @@ class User(Base):
     full_name: Mapped[Optional[str]] = mapped_column(String)
     
     accounts: Mapped[List["Account"]] = relationship(back_populates="owner")
-
     
 class Account(Base):
     __tablename__ = "account"
@@ -27,6 +27,7 @@ class Account(Base):
     owner_id: Mapped[int] = mapped_column(ForeignKey("user.user_id"), nullable=False)
     
     owner: Mapped["User"] = relationship(back_populates="accounts")
+    transactions: Mapped[List["Transaction"]] = relationship(back_populates="category")
     
 class Payee(Base):
     __tablename__ = "payee"
@@ -34,11 +35,15 @@ class Payee(Base):
     payee_id: Mapped[int] = mapped_column(primary_key=True)
     payee_name: Mapped[str] = mapped_column(String, unique=True)
     
+    transactions: Mapped[List["Transaction"]] = relationship(back_populates="payee")
+    
 class Category(Base):
     __tablename__ = "category"
     
     category_id: Mapped[int] = mapped_column(primary_key=True)
     category_name: Mapped[str] = mapped_column(String, unique=True)
+    
+    transactions: Mapped[List["Transaction"]] = relationship(back_populates="category")
     
 class Transaction(Base):
     __tablename__ = "transaction"
@@ -50,7 +55,11 @@ class Transaction(Base):
     category_id: Mapped[int] = mapped_column(ForeignKey("category.category_id"))
     amount: Mapped[Decimal] = mapped_column(Numeric(precision=10, scale=2), nullable=False, default=Decimal("0.00"), server_default=text("0.00"))
 
+    account: Mapped["Account"] = relationship(back_populates="transactions")
+    payee: Mapped["Payee"] = relationship(back_populates="transactions")
+    category: Mapped["Category"] = relationship(back_populates="transactions")
+
 
 engine = create_engine("sqlite:///:memory:", echo=True)
-
 Base.metadata.create_all(engine)
+
