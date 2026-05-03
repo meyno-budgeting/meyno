@@ -27,7 +27,7 @@ class Account(Base):
     owner_id: Mapped[int] = mapped_column(ForeignKey("user.user_id"), nullable=False)
     
     owner: Mapped["User"] = relationship(back_populates="accounts")
-    transactions: Mapped[List["Transaction"]] = relationship(back_populates="category")
+    transactions: Mapped[List["Transaction"]] = relationship(back_populates="account")
     
 class Payee(Base):
     __tablename__ = "payee"
