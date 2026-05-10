@@ -1,5 +1,5 @@
-# macOS Finder .DS_Store
-.DS_Store
+# macOS .DS_Store 
+**/.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
