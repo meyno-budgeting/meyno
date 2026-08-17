@@ -3,6 +3,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+from meyno.database import models  # noqa: F401
 from meyno.database.base import Base
 from meyno.database.connection import DATABASE_URL
 
