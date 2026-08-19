@@ -170,6 +170,7 @@ def test_transfer_transaction(session):
     session.commit()
     
     outgoing_transaction.transfer_transaction = incoming_transaction
+    incoming_transaction.transfer_transaction = outgoing_transaction
     session.commit()
     
     queried_outgoing = session.get(

@@ -83,6 +83,7 @@ class Transaction(Base):
     transfer_transaction: Mapped[Transaction | None] = relationship(
         remote_side = "Transaction.transaction_id",
         foreign_keys = [transfer_transaction_id],
+        post_update = True,
     )
     
     def __repr__(self) -> str:
