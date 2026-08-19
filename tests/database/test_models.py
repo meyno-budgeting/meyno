@@ -194,3 +194,36 @@ def test_transfer_transaction(session):
     assert queried_incoming.transfer_transaction is outgoing_transaction
     assert queried_incoming.payee.name == "Chase"
     assert queried_incoming.notes == "Moving some savings over"
+    
+def test_relationships_work_in_both_directions(session):
+    account = Account(name="Checking")
+    category = Category(name="Groceries")
+    payee = Payee(name="Walmart")
+
+    transaction = Transaction(
+        account=account,
+        payee=payee,
+        date=date(2026, 8, 18),
+        amount=5000,
+    )
+
+    split = TransactionSplit(
+        transaction=transaction,
+        category=category,
+        amount=5000,
+    )
+
+    session.add(transaction)
+    session.commit()
+
+    assert transaction.account is account
+    assert transaction in account.transactions
+
+    assert transaction.payee is payee
+    assert transaction in payee.transactions
+
+    assert split.transaction is transaction
+    assert split in transaction.splits
+
+    assert split.category is category
+    assert split in category.transaction_splits
