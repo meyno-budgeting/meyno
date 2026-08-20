@@ -19,7 +19,7 @@ def create_account(session: Session, name: str) -> Account:
         raise ValueError("Account name cannot be empty.")
     
     # Check if account already exists
-    existing_account = get_account_by_id(session, name)
+    existing_account = get_account_by_name(session, name)
     if existing_account is not None:
         raise ValueError(f"Account already exists: {name}")
     
