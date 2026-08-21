@@ -24,3 +24,6 @@ dev = [
     "pytest>=9.0,<10.0",
     "ruff",
 ]
+
+[tool.ruff]
+extend-exclude = ["alembic"]

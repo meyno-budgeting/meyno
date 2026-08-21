@@ -35,17 +35,20 @@ def test_get_account_by_name(session):
     assert result is not None
     assert result.account_id == account.account_id
     assert result.name == "Checking"
-    
+
+
 def test_create_account_empty_name(session):
-    with pytest.raises(ValueError, match = "Account name cannot be empty."):
+    with pytest.raises(ValueError, match="Account name cannot be empty."):
         create_account(session, "  ")
-        
+
+
 def test_create_duplicate_account(session):
     create_account(session, "Checking")
-    
-    with pytest.raises(ValueError, match = "Account already exists: Checking"):
+
+    with pytest.raises(ValueError, match="Account already exists: Checking"):
         create_account(session, "Checking")
-        
+
+
 def test_get_account_by_id_not_found(session):
     result = get_account_by_id(session, 999)
 
