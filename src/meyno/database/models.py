@@ -1,6 +1,6 @@
-from datetime import date as datetype
+from datetime import date
 
-from sqlalchemy import Date, ForeignKey, Integer, String
+from sqlalchemy import CheckConstraint, Date, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from meyno.database.base import Base
@@ -10,7 +10,7 @@ class Account(Base):
     __tablename__ = "account"
 
     account_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
 
     transactions: Mapped[list[Transaction]] = relationship(back_populates="account")
 
@@ -22,7 +22,7 @@ class Category(Base):
     __tablename__ = "category"
 
     category_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
 
     transaction_splits: Mapped[list[TransactionSplit]] = relationship(
         back_populates="category"
@@ -36,7 +36,7 @@ class Payee(Base):
     __tablename__ = "payee"
 
     payee_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
 
     transactions: Mapped[list[Transaction]] = relationship(back_populates="payee")
 
@@ -59,7 +59,7 @@ class Transaction(Base):
         nullable=False,
     )
 
-    date: Mapped[datetype] = mapped_column(Date, nullable=False)
+    date: Mapped[date] = mapped_column(Date, nullable=False)
 
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
 
@@ -82,6 +82,13 @@ class Transaction(Base):
         remote_side="Transaction.transaction_id",
         foreign_keys=[transfer_transaction_id],
         post_update=True,
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "transfer_transaction_id IS NULL OR transfer_transaction_id != transaction_id",
+            name="ck_transaction_transfer_not_self",
+        ),
     )
 
     def __repr__(self) -> str:
@@ -109,7 +116,7 @@ class TransactionSplit(Base):
     )
 
     category_id: Mapped[int | None] = mapped_column(
-        ForeignKey("category.category_id"), nullable=True
+        ForeignKey("category.category_id"), nullable=True, unique=False
     )
 
     amount: Mapped[int] = mapped_column(Integer, nullable=False)

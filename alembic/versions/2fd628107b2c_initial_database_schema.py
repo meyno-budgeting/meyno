@@ -1,8 +1,8 @@
-"""changed data type for string and text fields
+"""initial database schema
 
-Revision ID: ae5dface1d93
+Revision ID: 2fd628107b2c
 Revises: 
-Create Date: 2026-08-17 17:30:11.913608
+Create Date: 2026-08-21 11:03:01.750872
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'ae5dface1d93'
+revision: str = '2fd628107b2c'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,17 +24,20 @@ def upgrade() -> None:
     op.create_table('account',
     sa.Column('account_id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=50), nullable=False),
-    sa.PrimaryKeyConstraint('account_id')
+    sa.PrimaryKeyConstraint('account_id'),
+    sa.UniqueConstraint('name')
     )
     op.create_table('category',
     sa.Column('category_id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=50), nullable=False),
-    sa.PrimaryKeyConstraint('category_id')
+    sa.PrimaryKeyConstraint('category_id'),
+    sa.UniqueConstraint('name')
     )
     op.create_table('payee',
     sa.Column('payee_id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=50), nullable=False),
-    sa.PrimaryKeyConstraint('payee_id')
+    sa.PrimaryKeyConstraint('payee_id'),
+    sa.UniqueConstraint('name')
     )
     op.create_table('transaction',
     sa.Column('transaction_id', sa.Integer(), nullable=False),
@@ -44,6 +47,7 @@ def upgrade() -> None:
     sa.Column('amount', sa.Integer(), nullable=False),
     sa.Column('notes', sa.String(length=75), nullable=True),
     sa.Column('transfer_transaction_id', sa.Integer(), nullable=True),
+    sa.CheckConstraint('transfer_transaction_id IS NULL OR transfer_transaction_id != transaction_id', name='ck_transaction_transfer_not_self'),
     sa.ForeignKeyConstraint(['account_id'], ['account.account_id'], ),
     sa.ForeignKeyConstraint(['payee_id'], ['payee.payee_id'], ),
     sa.ForeignKeyConstraint(['transfer_transaction_id'], ['transaction.transaction_id'], ),
