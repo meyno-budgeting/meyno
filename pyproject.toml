@@ -69,7 +69,7 @@ extend-select = [
     "G",    # Flake8-logging-format – logging format string issues
     "INP",  # Flake8-no-pep420 – requires __init__.py files (no implicit namespace packages)
     "PIE",  # Flake8-pie – Python improvement suggestions
-    # "T20",  # Flake8-print – disallows print statements
+    "T20",  # Flake8-print – disallows print statements
     "PYI",  # Flake8-pyi – checks for type stub (.pyi) consistency
     "PT",   # Flake8-pytest-style – pytest best practices
     "Q",    # Flake8-quotes – enforces quote style consistency
@@ -119,6 +119,7 @@ ignore = [
     "TC003", # Flake8-type-checking - Checks for imports from typing that are not within TYPE_CHECKING blocks.
     "COM812", # Flake8-commas - Missing trailing comma. Conflicts with the formatter, which manages trailing commas itself (magic trailing comma is unaffected); Ruff recommends disabling.
     "ISC001", # Flake8-implicit-str-concat - Single-line implicit string concatenation. Conflicts with the formatter; Ruff recommends disabling alongside COM812.
+    "TD003", # Flake8-todos - Checks if TODO comments have issues linked to them
 ]
 
 [tool.ruff.lint.per-file-ignores]

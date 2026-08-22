@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from meyno.application.account import (
@@ -38,7 +40,7 @@ def test_get_account_by_name(session):
 
 
 def test_create_account_empty_name(session):
-    with pytest.raises(ValueError, match="Account name cannot be empty."):
+    with pytest.raises(ValueError, match=re.escape("Account name cannot be empty.")):
         create_account(session, "  ")
 
 

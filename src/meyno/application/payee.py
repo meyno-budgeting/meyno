@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from meyno.database.models import Payee
 
-# TODO: Wishlist: Add custom Errors related to Payee
+# TODO(ChaoticDefense): Wishlist: Add custom Errors related to Payee
 # PayeeNotFoundError - For not finding the requested payee
 # PayeeExistsError - For when an Payee already exists with that name
 # PayeeNameEmptyError - For when Payee name is empty
@@ -71,8 +71,6 @@ def delete_payee(session: Session, payee_id: int) -> None:
     if found_payee is None:
         msg = f"Cannot find Payee with id {payee_id}"
         raise ValueError(msg)
-
-    print(found_payee)
 
     session.delete(found_payee)
     session.flush()

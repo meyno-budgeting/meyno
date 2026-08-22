@@ -6,11 +6,11 @@ from meyno.database.connection import create_engine_and_session_factory
 
 @pytest.fixture
 def session():
-    engine, SessionLocal = create_engine_and_session_factory("sqlite:///:memory:")
+    engine, session_local = create_engine_and_session_factory("sqlite:///:memory:")
 
     Base.metadata.create_all(engine)
 
-    with SessionLocal() as session:
+    with session_local() as session:
         yield session
 
     engine.dispose()

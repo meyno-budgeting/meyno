@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from meyno.database.models import Account
 
-# TODO: Wishlist: Add custom Errors related to Account
+# TODO(ChaoticDefense): Wishlist: Add custom Errors related to Account
 # AccountNotFoundError - For not finding the requested account
 # AccountExistsError - For when an Account already exists with that name
 # AccountNameEmptyError - For when Account name is empty
@@ -71,8 +71,6 @@ def delete_account(session: Session, account_id: int) -> None:
     if found_account is None:
         msg = f"Cannot find Account with id {account_id}"
         raise ValueError(msg)
-
-    print(found_account)
 
     session.delete(found_account)
     session.flush()
