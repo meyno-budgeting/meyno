@@ -1,5 +1,4 @@
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from meyno.database.models import Payee
@@ -30,7 +29,7 @@ def create_payee(session: Session, name: str) -> Payee:
     existing_payee = get_payee_by_name(session, name)
     if existing_payee is not None:
         msg = f"Payee already exists: {name}"
-        raise IntegrityError(msg)
+        raise ValueError(msg)
 
     payee = Payee(name=name)
 
@@ -58,7 +57,7 @@ def update_payee_name(session: Session, payee_id: int, new_name: str) -> Payee:
 
     if existing_payee is not None:
         msg = f"Payee already exists: {new_name}"
-        raise IntegrityError(msg)
+        raise ValueError(msg)
 
     found_payee.name = new_name
     session.flush()

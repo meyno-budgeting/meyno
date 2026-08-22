@@ -1,5 +1,4 @@
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from meyno.database.models import Category
@@ -30,7 +29,7 @@ def create_category(session: Session, name: str) -> Category:
     existing_category = get_category_by_name(session, name)
     if existing_category is not None:
         msg = f"Category already exists: {name}"
-        raise IntegrityError(msg)
+        raise ValueError(msg)
 
     category = Category(name=name)
 
@@ -58,7 +57,7 @@ def update_category_name(session: Session, category_id: int, new_name: str) -> C
 
     if existing_category is not None:
         msg = f"Category already exists: {new_name}"
-        raise IntegrityError(msg)
+        raise ValueError(msg)
 
     found_category.name = new_name
     session.flush()
