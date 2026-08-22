@@ -629,7 +629,7 @@ def test_transaction_split_id_not_null(session):
         session.flush()
 
 
-def test_transaction_date_cannot_be_null(session):
+def test_transaction_date_not_null(session):
     account = Account(name="Checking")
     payee = Payee(name="Test Payee")
 
@@ -649,7 +649,7 @@ def test_transaction_date_cannot_be_null(session):
         session.flush()
 
 
-def test_transaction_amount_cannot_be_null(session):
+def test_transaction_amount_not_null(session):
     account = Account(name="Checking")
     payee = Payee(name="Test Payee")
 
@@ -669,7 +669,7 @@ def test_transaction_amount_cannot_be_null(session):
         session.flush()
 
 
-def test_transaction_split_amount_cannot_be_null(session):
+def test_transaction_split_amount_not_null(session):
     account = Account(name="Checking")
     payee = Payee(name="Test Payee")
 
