@@ -563,11 +563,67 @@ def test_foreign_key_violation_for_payee(session):
         session.flush()
 
 
+def test_foreign_key_violation_for_category(session):
+    account = Account(name="Checking")
+    payee = Payee(name="Test Payee")
+
+    session.add_all([account, payee])
+    session.commit()
+
+    transaction = Transaction(
+        account_id=account.account_id,
+        payee_id=payee.payee_id,
+        date=date(2026, 8, 18),
+        amount=5000,
+    )
+
+    session.add(transaction)
+    session.commit()
+
+    split = TransactionSplit(
+        transaction_id=transaction.transaction_id,
+        category_id=999,
+        amount=5000,
+    )
+
+    session.add(split)
+
+    with pytest.raises(IntegrityError):
+        session.flush()
+
+
 # NOT NULL constraints
-def test_account_name_cannot_be_null(session):
+def test_account_name_not_null(session):
     account = Account(name=None)
 
     session.add(account)
+
+    with pytest.raises(IntegrityError):
+        session.flush()
+
+
+def test_payee_name_not_null(session):
+    payee = Payee(name=None)
+
+    session.add(payee)
+
+    with pytest.raises(IntegrityError):
+        session.flush()
+
+
+def test_category_name_not_null(session):
+    category = Category(name=None)
+
+    session.add(category)
+
+    with pytest.raises(IntegrityError):
+        session.flush()
+
+
+def test_transaction_split_id_not_null(session):
+    split = TransactionSplit(transaction_id=None)
+
+    session.add(split)
 
     with pytest.raises(IntegrityError):
         session.flush()
@@ -636,6 +692,37 @@ def test_transaction_split_amount_cannot_be_null(session):
     )
 
     session.add(split)
+
+    with pytest.raises(IntegrityError):
+        session.flush()
+
+
+# UNIQUE constraints
+def test_account_name_unique(session):
+    session.add(Account(name="Checking"))
+    session.commit()
+
+    session.add(Account(name="Checking"))
+
+    with pytest.raises(IntegrityError):
+        session.flush()
+
+
+def test_payee_name_unique(session):
+    session.add(Payee(name="Walmart"))
+    session.commit()
+
+    session.add(Payee(name="Walmart"))
+
+    with pytest.raises(IntegrityError):
+        session.flush()
+
+
+def test_category_name_unique(session):
+    session.add(Category(name="Walmart"))
+    session.commit()
+
+    session.add(Category(name="Walmart"))
 
     with pytest.raises(IntegrityError):
         session.flush()
