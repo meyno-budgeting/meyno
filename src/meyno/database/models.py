@@ -81,6 +81,7 @@ class Transaction(Base):
     transfer_transaction: Mapped[Transaction | None] = relationship(
         remote_side="Transaction.transaction_id",
         foreign_keys=[transfer_transaction_id],
+        cascade="all, delete",
         post_update=True,
     )
 
