@@ -1,7 +1,13 @@
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from meyno.database.models import Account
+
+# TODO: Wishlist: Add custom Errors related to Account
+# AccountNotFoundError - For not finding the requested account
+# AccountExistsError - For when an Account already exists with that name
+# AccountNameEmptyError - For when Account name is empty
 
 
 def get_account_by_id(session: Session, account_id: int) -> Account | None:
@@ -24,7 +30,7 @@ def create_account(session: Session, name: str) -> Account:
     existing_account = get_account_by_name(session, name)
     if existing_account is not None:
         msg = f"Account already exists: {name}"
-        raise ValueError(msg)
+        raise IntegrityError(msg)
 
     account = Account(name=name)
 
@@ -52,7 +58,7 @@ def update_account_name(session: Session, account_id: int, new_name: str) -> Acc
 
     if existing_account is not None:
         msg = f"Account already exists: {new_name}"
-        raise ValueError(msg)
+        raise IntegrityError(msg)
 
     found_account.name = new_name
     session.flush()
