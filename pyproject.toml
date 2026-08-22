@@ -120,6 +120,7 @@ ignore = [
     "COM812", # Flake8-commas - Missing trailing comma. Conflicts with the formatter, which manages trailing commas itself (magic trailing comma is unaffected); Ruff recommends disabling.
     "ISC001", # Flake8-implicit-str-concat - Single-line implicit string concatenation. Conflicts with the formatter; Ruff recommends disabling alongside COM812.
     "TD003", # Flake8-todos - Checks if TODO comments have issues linked to them
+    "FIX002", # Flake8-fixme - Marks TODO comments should be resolved
 ]
 
 [tool.ruff.lint.per-file-ignores]
