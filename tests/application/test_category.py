@@ -102,7 +102,7 @@ def test_update_category_name_empty_name(session):
         ValueError,
         match=re.escape("Category name cannot be empty."),
     ):
-        update_category_name(session, category.category_id, "  ")
+        update_category_name(session, category, "  ")
 
 
 def test_update_category_name_same_name(session):

@@ -102,7 +102,7 @@ def test_update_account_name_empty_name(session):
         ValueError,
         match=re.escape("Account name cannot be empty."),
     ):
-        update_account_name(session, account.account_id, "  ")
+        update_account_name(session, account, "  ")
 
 
 def test_update_account_name_same_name(session):

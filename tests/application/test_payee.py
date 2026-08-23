@@ -102,7 +102,7 @@ def test_update_payee_name_empty_name(session):
         ValueError,
         match=re.escape("Payee name cannot be empty."),
     ):
-        update_payee_name(session, payee.payee_id, "  ")
+        update_payee_name(session, payee, "  ")
 
 
 def test_update_payee_name_same_name(session):
