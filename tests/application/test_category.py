@@ -118,7 +118,9 @@ def test_update_category_name_duplicate(session):
     create_category(session, "Groceries")
     fun = create_category(session, "Fun")
 
-    with pytest.raises(ValueError, match=re.escape("Category already exists: Groceries")):
+    with pytest.raises(
+        ValueError, match=re.escape("Category already exists: Groceries")
+    ):
         update_category_name(session, fun, "Groceries")
 
     assert fun.name == "Fun"

@@ -39,7 +39,9 @@ def create_category(session: Session, name: str) -> Category:
     return category
 
 
-def update_category_name(session: Session, category: Category, new_name: str) -> Category:
+def update_category_name(
+    session: Session, category: Category, new_name: str
+) -> Category:
 
     new_name = new_name.strip()
 

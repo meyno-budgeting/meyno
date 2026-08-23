@@ -2,7 +2,13 @@ import re
 
 import pytest
 
-from meyno.application.payee import create_payee, delete_payee, get_payee_by_id, get_payee_by_name, update_payee_name
+from meyno.application.payee import (
+    create_payee,
+    delete_payee,
+    get_payee_by_id,
+    get_payee_by_name,
+    update_payee_name,
+)
 from meyno.database.models import Payee
 
 
