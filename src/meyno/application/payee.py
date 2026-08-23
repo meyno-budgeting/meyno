@@ -39,19 +39,14 @@ def create_payee(session: Session, name: str) -> Payee:
     return payee
 
 
-def update_payee_name(session: Session, payee_id: int, new_name: str) -> Payee:
-    found_payee = get_payee_by_id(session, payee_id)
-    if found_payee is None:
-        msg = f"Cannot find Payee with id {payee_id}"
-        raise ValueError(msg)
-
+def update_payee_name(session: Session, payee: Payee, new_name: str) -> Payee:
     new_name = new_name.strip()
 
     if not new_name:
         raise ValueError("Payee name cannot be empty.")
 
-    if new_name == found_payee.name:
-        return found_payee
+    if new_name == payee.name:
+        return payee
 
     existing_payee = get_payee_by_name(session, new_name)
 
@@ -59,17 +54,12 @@ def update_payee_name(session: Session, payee_id: int, new_name: str) -> Payee:
         msg = f"Payee already exists: {new_name}"
         raise ValueError(msg)
 
-    found_payee.name = new_name
+    payee.name = new_name
     session.flush()
 
-    return found_payee
+    return payee
 
 
-def delete_payee(session: Session, payee_id: int) -> None:
-    found_payee = get_payee_by_id(session, payee_id)
-    if found_payee is None:
-        msg = f"Cannot find Payee with id {payee_id}"
-        raise ValueError(msg)
-
-    session.delete(found_payee)
+def delete_payee(session: Session, payee: Payee) -> None:
+    session.delete(payee)
     session.flush()

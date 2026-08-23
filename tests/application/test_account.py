@@ -82,7 +82,7 @@ def test_get_account_by_name_not_found(session):
 def test_update_account_name(session):
     account = create_account(session, "Checking")
 
-    updated_account = update_account_name(session, account.account_id, "Savings")
+    updated_account = update_account_name(session, account, "Savings")
 
     assert updated_account is account
     assert updated_account.name == "Savings"
@@ -93,14 +93,6 @@ def test_update_account_name(session):
 
     assert stored_account is not None
     assert stored_account.name == "Savings"
-
-
-def test_update_account_name_not_found(session):
-    with pytest.raises(
-        ValueError,
-        match=re.escape("Cannot find Account with id 999"),
-    ):
-        update_account_name(session, 999, "Checking")
 
 
 def test_update_account_name_empty_name(session):
@@ -116,7 +108,7 @@ def test_update_account_name_empty_name(session):
 def test_update_account_name_same_name(session):
     account = create_account(session, "Checking")
 
-    result = update_account_name(session, account.account_id, "Checking")
+    result = update_account_name(session, account, "Checking")
 
     assert result is account
     assert result.name == "Checking"
@@ -126,11 +118,8 @@ def test_update_account_name_duplicate(session):
     create_account(session, "Checking")
     savings = create_account(session, "Savings")
 
-    with pytest.raises(
-        ValueError,
-        match=re.escape("Account already exists: Checking"),
-    ):
-        update_account_name(session, savings.account_id, "Checking")
+    with pytest.raises(ValueError, match=re.escape("Account already exists: Checking")):
+        update_account_name(session, savings, "Checking")
 
     assert savings.name == "Savings"
 
@@ -138,11 +127,7 @@ def test_update_account_name_duplicate(session):
 def test_update_account_name_strips_name(session):
     account = create_account(session, "Checking")
 
-    result = update_account_name(
-        session,
-        account.account_id,
-        "  Savings  ",
-    )
+    result = update_account_name(session, account, "  Savings  ")
 
     assert result.name == "Savings"
 
@@ -156,18 +141,9 @@ def test_update_account_name_strips_name(session):
 
 def test_delete_account(session):
     account = create_account(session, "Checking")
-    account_id = account.account_id
 
-    assert delete_account(session, account_id) is None
+    assert delete_account(session, account) is None
 
     session.expire_all()
 
-    assert session.get(Account, account_id) is None
-
-
-def test_delete_account_not_found(session):
-    with pytest.raises(
-        ValueError,
-        match=re.escape("Cannot find Account with id 999"),
-    ):
-        delete_account(session, 999)
+    assert session.get(Account, account.account_id) is None

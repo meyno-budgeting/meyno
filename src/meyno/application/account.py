@@ -39,19 +39,14 @@ def create_account(session: Session, name: str) -> Account:
     return account
 
 
-def update_account_name(session: Session, account_id: int, new_name: str) -> Account:
-    found_account = get_account_by_id(session, account_id)
-    if found_account is None:
-        msg = f"Cannot find Account with id {account_id}"
-        raise ValueError(msg)
-
+def update_account_name(session: Session, account: Account, new_name: str) -> Account:
     new_name = new_name.strip()
 
     if not new_name:
         raise ValueError("Account name cannot be empty.")
 
-    if new_name == found_account.name:
-        return found_account
+    if new_name == account.name:
+        return account
 
     existing_account = get_account_by_name(session, new_name)
 
@@ -59,17 +54,12 @@ def update_account_name(session: Session, account_id: int, new_name: str) -> Acc
         msg = f"Account already exists: {new_name}"
         raise ValueError(msg)
 
-    found_account.name = new_name
+    account.name = new_name
     session.flush()
 
-    return found_account
+    return account
 
 
-def delete_account(session: Session, account_id: int) -> None:
-    found_account = get_account_by_id(session, account_id)
-    if found_account is None:
-        msg = f"Cannot find Account with id {account_id}"
-        raise ValueError(msg)
-
-    session.delete(found_account)
+def delete_account(session: Session, account: Account) -> None:
+    session.delete(account)
     session.flush()

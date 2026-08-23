@@ -39,19 +39,15 @@ def create_category(session: Session, name: str) -> Category:
     return category
 
 
-def update_category_name(session: Session, category_id: int, new_name: str) -> Category:
-    found_category = get_category_by_id(session, category_id)
-    if found_category is None:
-        msg = f"Cannot find Category with id {category_id}"
-        raise ValueError(msg)
+def update_category_name(session: Session, category: Category, new_name: str) -> Category:
 
     new_name = new_name.strip()
 
     if not new_name:
         raise ValueError("Category name cannot be empty.")
 
-    if new_name == found_category.name:
-        return found_category
+    if new_name == category.name:
+        return category
 
     existing_category = get_category_by_name(session, new_name)
 
@@ -59,17 +55,12 @@ def update_category_name(session: Session, category_id: int, new_name: str) -> C
         msg = f"Category already exists: {new_name}"
         raise ValueError(msg)
 
-    found_category.name = new_name
+    category.name = new_name
     session.flush()
 
-    return found_category
+    return category
 
 
-def delete_category(session: Session, category_id: int) -> None:
-    found_category = get_category_by_id(session, category_id)
-    if found_category is None:
-        msg = f"Cannot find Category with id {category_id}"
-        raise ValueError(msg)
-
-    session.delete(found_category)
+def delete_category(session: Session, category: Category) -> None:
+    session.delete(category)
     session.flush()

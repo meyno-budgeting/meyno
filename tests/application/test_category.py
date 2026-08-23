@@ -82,7 +82,7 @@ def test_get_category_by_name_not_found(session):
 def test_update_category_name(session):
     category = create_category(session, "Groceries")
 
-    updated_category = update_category_name(session, category.category_id, "Fun")
+    updated_category = update_category_name(session, category, "Fun")
 
     assert updated_category is category
     assert updated_category.name == "Fun"
@@ -93,14 +93,6 @@ def test_update_category_name(session):
 
     assert stored_category is not None
     assert stored_category.name == "Fun"
-
-
-def test_update_category_name_not_found(session):
-    with pytest.raises(
-        ValueError,
-        match=re.escape("Cannot find Category with id 999"),
-    ):
-        update_category_name(session, 999, "Groceries")
 
 
 def test_update_category_name_empty_name(session):
@@ -116,7 +108,7 @@ def test_update_category_name_empty_name(session):
 def test_update_category_name_same_name(session):
     category = create_category(session, "Groceries")
 
-    result = update_category_name(session, category.category_id, "Groceries")
+    result = update_category_name(session, category, "Groceries")
 
     assert result is category
     assert result.name == "Groceries"
@@ -126,11 +118,8 @@ def test_update_category_name_duplicate(session):
     create_category(session, "Groceries")
     fun = create_category(session, "Fun")
 
-    with pytest.raises(
-        ValueError,
-        match=re.escape("Category already exists: Groceries"),
-    ):
-        update_category_name(session, fun.category_id, "Groceries")
+    with pytest.raises(ValueError, match=re.escape("Category already exists: Groceries")):
+        update_category_name(session, fun, "Groceries")
 
     assert fun.name == "Fun"
 
@@ -138,11 +127,7 @@ def test_update_category_name_duplicate(session):
 def test_update_category_name_strips_name(session):
     category = create_category(session, "Groceries")
 
-    result = update_category_name(
-        session,
-        category.category_id,
-        "  Fun  ",
-    )
+    result = update_category_name(session, category, "  Fun  ")
 
     assert result.name == "Fun"
 
@@ -156,18 +141,9 @@ def test_update_category_name_strips_name(session):
 
 def test_delete_category(session):
     category = create_category(session, "Groceries")
-    category_id = category.category_id
 
-    assert delete_category(session, category_id) is None
+    assert delete_category(session, category) is None
 
     session.expire_all()
 
-    assert session.get(Category, category_id) is None
-
-
-def test_delete_category_not_found(session):
-    with pytest.raises(
-        ValueError,
-        match=re.escape("Cannot find Category with id 999"),
-    ):
-        delete_category(session, 999)
+    assert session.get(Category, category.category_id) is None
