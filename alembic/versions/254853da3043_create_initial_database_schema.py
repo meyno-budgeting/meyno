@@ -1,8 +1,8 @@
-"""initial database schema
+"""create initial database schema
 
-Revision ID: 2fd628107b2c
+Revision ID: 254853da3043
 Revises: 
-Create Date: 2026-08-21 11:03:01.750872
+Create Date: 2026-08-22 20:42:27.490434
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '2fd628107b2c'
+revision: str = '254853da3043'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -41,9 +41,9 @@ def upgrade() -> None:
     )
     op.create_table('transaction',
     sa.Column('transaction_id', sa.Integer(), nullable=False),
-    sa.Column('account_id', sa.Integer(), nullable=False),
-    sa.Column('payee_id', sa.Integer(), nullable=False),
     sa.Column('date', sa.Date(), nullable=False),
+    sa.Column('account_id', sa.Integer(), nullable=False),
+    sa.Column('payee_id', sa.Integer(), nullable=True),
     sa.Column('amount', sa.Integer(), nullable=False),
     sa.Column('notes', sa.String(length=75), nullable=True),
     sa.Column('transfer_transaction_id', sa.Integer(), nullable=True),

@@ -49,17 +49,17 @@ class Transaction(Base):
 
     transaction_id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
+    date: Mapped[date] = mapped_column(Date, nullable=False)
+
     account_id: Mapped[int] = mapped_column(
         ForeignKey(column="account.account_id"),
         nullable=False,
     )
 
-    payee_id: Mapped[int] = mapped_column(
+    payee_id: Mapped[int | None] = mapped_column(
         ForeignKey(column="payee.payee_id"),
-        nullable=False,
+        nullable=True,
     )
-
-    date: Mapped[date] = mapped_column(Date, nullable=False)
 
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
 
