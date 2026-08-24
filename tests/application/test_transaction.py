@@ -1,45 +1,55 @@
-from datetime import date
+import datetime
 
-import pytest
+from sqlalchemy.orm import Session
 
 from meyno.application.account import create_account
 from meyno.application.payee import create_payee
 from meyno.application.transaction import (
-    Transaction,
-    TransactionSplit,
-    create_transaction,
+    create_default_transaction,
     delete_transaction,
     get_transaction_by_id,
 )
+from meyno.database.models import Transaction
 
 
-# FIXME Actual test
-def test_create_transaction(session):
-    assert True
+def test_create_default_transaction(session: Session):
+    expected_date = datetime.datetime.now().astimezone().date()
 
-
-def test_get_transaction_by_id(session):
-    payee = create_payee(session, "Walmart")
     account = create_account(session, "Checking")
-    transaction_date = date(2026, 8, 23)
-    amount = 10000
+    transaction = create_default_transaction(session, account)
 
-    transaction = create_transaction(
-        session,
-        account=account,
-        payee=payee,
-        transaction_date=transaction_date,
-        amount=amount,
-    )
-
-    session.commit()
     session.expire_all()
 
-    result = get_transaction_by_id(session, transaction.transaction_id)
+    stored_transaction = session.get(Transaction, transaction.transaction_id)
 
-    assert result is not None
-    assert result.account_id == account.account_id
-    assert result.amount == 10000
+    assert stored_transaction is not None
+    assert stored_transaction.account is account
+    assert stored_transaction.payee is None
+    assert stored_transaction.date == expected_date
+    assert stored_transaction.amount == 0
+    assert stored_transaction.notes is None
+    assert stored_transaction.transaction_id is not None
+
+    assert len(stored_transaction.splits) == 1
+    assert stored_transaction.splits[0].transaction is stored_transaction
+    assert stored_transaction.splits[0].category is None
+    assert stored_transaction.splits[0].amount == stored_transaction.amount
+    assert stored_transaction.splits[0].transaction_split_id is not None
+
+
+def test_get_transaction_by_id(session: Session):
+    account = create_account(session, "Checking")
+    transaction = create_default_transaction(session, account)
+
+    session.expire_all()
+
+    stored_transaction = get_transaction_by_id(
+        session,
+        transaction.transaction_id,
+    )
+
+    assert stored_transaction is not None
+    assert stored_transaction.transaction_id == transaction.transaction_id
 
 
 def test_delete_transaction(session):
