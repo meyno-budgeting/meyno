@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from meyno.database.models import Account
+from meyno.database.models import Account, Transaction
 
 # TODO(ChaoticDefense): Wishlist: Add custom Errors related to Account
 # AccountNotFoundError - For not finding the requested account
@@ -61,5 +61,28 @@ def update_account_name(session: Session, account: Account, new_name: str) -> Ac
 
 
 def delete_account(session: Session, account: Account) -> None:
+    # Deletion logic: deleting explicitly a transaction that is part of a transfer
+    # will also delete the other part of the transfer.
+    # Deleting a whole account will instead break the chain and delete all transactions
+    # in the account, while keeping the other side in tact.
+
+    for transaction in account.transactions:
+        # Transaction is the outgoing side.
+        if transaction.transfer_transaction is not None:
+            transaction.transfer_transaction = None
+
+        # Transaction may be the incoming side.
+        else:
+            outgoing = session.scalars(
+                select(Transaction).where(
+                    Transaction.transfer_transaction_id == transaction.transaction_id
+                )
+            ).first()
+
+            if outgoing is not None:
+                outgoing.transfer_transaction = None
+
+    session.flush()
+
     session.delete(account)
     session.flush()

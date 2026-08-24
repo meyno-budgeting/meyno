@@ -312,7 +312,7 @@ def test_transaction_cannot_transfer_to_itself(session):
     session.add(transaction)
     session.flush()
 
-    transaction.transfer_transaction = transaction
+    transaction.transfer_transaction_id = transaction.transaction_id
 
     with pytest.raises(IntegrityError):
         session.flush()

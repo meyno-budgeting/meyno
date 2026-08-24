@@ -1,4 +1,5 @@
 import re
+from datetime import date
 
 import pytest
 
@@ -9,7 +10,7 @@ from meyno.application.account import (
     get_account_by_name,
     update_account_name,
 )
-from meyno.database.models import Account
+from meyno.database.models import Account, Transaction
 
 
 def test_create_account(session):
@@ -147,3 +148,107 @@ def test_delete_account(session):
     session.expire_all()
 
     assert session.get(Account, account.account_id) is None
+
+
+def test_delete_account_deletes_transactions(session):
+    account = create_account(session, "Checking")
+
+    transaction_1 = Transaction(
+        account=account,
+        date=date(2026, 8, 23),
+        amount=-10000,
+    )
+    transaction_2 = Transaction(
+        account=account,
+        date=date(2026, 8, 23),
+        amount=50000,
+    )
+
+    session.add_all([transaction_1, transaction_2])
+    session.flush()
+
+    transaction_1_id = transaction_1.transaction_id
+    transaction_2_id = transaction_2.transaction_id
+    account_id = account.account_id
+
+    delete_account(session, account)
+
+    session.expire_all()
+
+    assert session.get(Account, account_id) is None
+    assert session.get(Transaction, transaction_1_id) is None
+    assert session.get(Transaction, transaction_2_id) is None
+
+
+def test_delete_account_preserves_incoming_transfer_transaction(session):
+    checking = create_account(session, "Checking")
+    savings = create_account(session, "Savings")
+
+    checking_transaction = Transaction(
+        account=checking,
+        date=date(2026, 8, 24),
+        amount=-500,
+    )
+
+    savings_transaction = Transaction(
+        account=savings,
+        date=date(2026, 8, 24),
+        amount=500,
+    )
+
+    session.add_all([checking_transaction, savings_transaction])
+    session.flush()
+
+    checking_transaction.transfer_transaction = savings_transaction
+    session.flush()
+
+    savings_transaction_id = savings_transaction.transaction_id
+
+    delete_account(session, checking)
+
+    session.expire_all()
+
+    stored_savings_transaction = session.get(
+        Transaction,
+        savings_transaction_id,
+    )
+
+    assert stored_savings_transaction is not None
+    assert stored_savings_transaction.transfer_transaction is None
+
+
+def test_delete_account_preserves_outgoing_transfer_transaction(session):
+    checking = create_account(session, "Checking")
+    savings = create_account(session, "Savings")
+
+    checking_transaction = Transaction(
+        account=checking,
+        date=date(2026, 8, 24),
+        amount=-500,
+    )
+
+    savings_transaction = Transaction(
+        account=savings,
+        date=date(2026, 8, 24),
+        amount=500,
+    )
+
+    session.add_all([checking_transaction, savings_transaction])
+    session.flush()
+
+    checking_transaction.transfer_transaction = savings_transaction
+    session.flush()
+
+    checking_transaction_id = checking_transaction.transaction_id
+
+    delete_account(session, savings)
+
+    session.expire_all()
+
+    stored_checking_transaction = session.get(
+        Transaction,
+        checking_transaction_id,
+    )
+
+    assert stored_checking_transaction is not None
+    assert stored_checking_transaction.transfer_transaction is None
