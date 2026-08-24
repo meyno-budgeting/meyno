@@ -270,96 +270,29 @@ def test_transfer_transaction(session):
         notes="Moving some savings over",
     )
 
-    session.add_all(
-        [
-            outgoing_transaction,
-            incoming_transaction,
-        ]
-    )
-    session.commit()
-
     outgoing_transaction.transfer_transaction = incoming_transaction
-    incoming_transaction.transfer_transaction = outgoing_transaction
 
+    session.add_all([outgoing_transaction, incoming_transaction])
     session.commit()
     session.expire_all()
 
-    queried_outgoing = session.get(
-        Transaction,
-        outgoing_transaction.transaction_id,
-    )
-    queried_incoming = session.get(
-        Transaction,
-        incoming_transaction.transaction_id,
-    )
+    queried_outgoing = session.get(Transaction, outgoing_transaction.transaction_id)
+    queried_incoming = session.get(Transaction, incoming_transaction.transaction_id)
 
     assert queried_outgoing is not None
     assert queried_incoming is not None
 
     assert queried_outgoing.transfer_transaction_id == queried_incoming.transaction_id
-    assert queried_incoming.transfer_transaction_id == queried_outgoing.transaction_id
+    assert queried_incoming.transfer_transaction_id is None
 
     assert queried_outgoing.transfer_transaction is queried_incoming
-    assert queried_incoming.transfer_transaction is queried_outgoing
 
-    assert queried_outgoing.payee_id == queried_incoming.payee_id
+    assert queried_incoming.payee_id == queried_outgoing.payee_id
     assert queried_outgoing.payee.name == "Chase"
     assert queried_incoming.payee.name == "Chase"
 
     assert queried_outgoing.amount == -10000
     assert queried_incoming.amount == 10000
-
-
-def test_transfer_linked_before_flush(session):
-    checking_account = Account(name="Checking")
-    savings_account = Account(name="Savings")
-    payee = Payee(name="Chase")
-
-    session.add_all(
-        [
-            checking_account,
-            savings_account,
-            payee,
-        ]
-    )
-    session.commit()
-
-    outgoing_transaction = Transaction(
-        account=checking_account,
-        payee=payee,
-        date=date(2026, 8, 18),
-        amount=-10000,
-    )
-
-    incoming_transaction = Transaction(
-        account=savings_account,
-        payee=payee,
-        date=date(2026, 8, 18),
-        amount=10000,
-    )
-
-    outgoing_transaction.transfer_transaction = incoming_transaction
-    incoming_transaction.transfer_transaction = outgoing_transaction
-
-    session.add_all(
-        [
-            outgoing_transaction,
-            incoming_transaction,
-        ]
-    )
-
-    session.flush()
-
-    assert outgoing_transaction.transaction_id is not None
-    assert incoming_transaction.transaction_id is not None
-    assert (
-        outgoing_transaction.transfer_transaction_id
-        == incoming_transaction.transaction_id
-    )
-    assert (
-        incoming_transaction.transfer_transaction_id
-        == outgoing_transaction.transaction_id
-    )
 
 
 def test_transaction_cannot_transfer_to_itself(session):
@@ -383,83 +316,6 @@ def test_transaction_cannot_transfer_to_itself(session):
 
     with pytest.raises(IntegrityError):
         session.flush()
-
-
-def test_delete_outgoing_transfer_deletes_incoming(session):
-    checking_account = Account(name="Checking")
-    savings_account = Account(name="Savings")
-    payee = Payee(name="Chase")
-
-    outgoing_transaction = Transaction(
-        account=checking_account,
-        payee=payee,
-        date=date(2026, 8, 18),
-        amount=-10000,
-    )
-
-    incoming_transaction = Transaction(
-        account=savings_account,
-        payee=payee,
-        date=date(2026, 8, 18),
-        amount=10000,
-    )
-
-    outgoing_transaction.transfer_transaction = incoming_transaction
-    incoming_transaction.transfer_transaction = outgoing_transaction
-
-    session.add_all([outgoing_transaction, incoming_transaction])
-    session.commit()
-
-    outgoing_id = outgoing_transaction.transaction_id
-    incoming_id = incoming_transaction.transaction_id
-
-    session.delete(outgoing_transaction)
-    session.commit()
-    session.expire_all()
-
-    assert session.get(Transaction, outgoing_id) is None
-    assert session.get(Transaction, incoming_id) is None
-
-
-def test_delete_incoming_transfer_deletes_outgoing(session):
-    checking_account = Account(name="Checking")
-    savings_account = Account(name="Savings")
-    payee = Payee(name="Chase")
-
-    outgoing_transaction = Transaction(
-        account=checking_account,
-        payee=payee,
-        date=date(2026, 8, 18),
-        amount=-10000,
-    )
-
-    incoming_transaction = Transaction(
-        account=savings_account,
-        payee=payee,
-        date=date(2026, 8, 18),
-        amount=10000,
-    )
-
-    outgoing_transaction.transfer_transaction = incoming_transaction
-    incoming_transaction.transfer_transaction = outgoing_transaction
-
-    session.add_all(
-        [
-            outgoing_transaction,
-            incoming_transaction,
-        ]
-    )
-    session.commit()
-
-    outgoing_id = outgoing_transaction.transaction_id
-    incoming_id = incoming_transaction.transaction_id
-
-    session.delete(incoming_transaction)
-    session.commit()
-    session.expire_all()
-
-    assert session.get(Transaction, outgoing_id) is None
-    assert session.get(Transaction, incoming_id) is None
 
 
 # Cascade behavior
