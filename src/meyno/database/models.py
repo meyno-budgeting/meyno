@@ -12,7 +12,10 @@ class Account(Base):
     account_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
 
-    transactions: Mapped[list[Transaction]] = relationship(back_populates="account")
+    transactions: Mapped[list[Transaction]] = relationship(
+        back_populates="account",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"Account(account_id={self.account_id!r}, name={self.name!r})"
@@ -66,7 +69,7 @@ class Transaction(Base):
     notes: Mapped[str | None] = mapped_column(String(75), nullable=True)
 
     transfer_transaction_id: Mapped[int | None] = mapped_column(
-        ForeignKey(column="transaction.transaction_id"), nullable=True
+        ForeignKey("transaction.transaction_id"), nullable=True
     )
 
     account: Mapped[Account] = relationship(back_populates="transactions")
@@ -81,8 +84,6 @@ class Transaction(Base):
     transfer_transaction: Mapped[Transaction | None] = relationship(
         remote_side="Transaction.transaction_id",
         foreign_keys=[transfer_transaction_id],
-        cascade="all, delete",
-        post_update=True,
     )
 
     __table_args__ = (
