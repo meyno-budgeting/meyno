@@ -64,6 +64,7 @@ class Transaction(Base):
         nullable=True,
     )
 
+    # Amount in integer cents
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
 
     notes: Mapped[str | None] = mapped_column(String(75), nullable=True)
