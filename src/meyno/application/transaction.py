@@ -67,6 +67,17 @@ def update_transaction_payee(
     return transaction
 
 
+def update_transaction_amount(
+    session: Session, transaction: Transaction, new_amount: int
+) -> Transaction:
+
+    transaction.amount = new_amount
+
+    session.flush()
+
+    return transaction
+
+
 def delete_transaction(session: Session, transaction: Transaction) -> None:
     # Deletion logic: deleting explicitly a transaction that is part of a transfer
     # will also delete the other part of the transfer.
