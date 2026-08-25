@@ -45,6 +45,17 @@ def update_transaction_date(
     return transaction
 
 
+def update_transaction_account(
+    session: Session, transaction: Transaction, new_account: Account
+) -> Transaction:
+
+    transaction.account = new_account
+
+    session.flush()
+
+    return transaction
+
+
 def delete_transaction(session: Session, transaction: Transaction) -> None:
     # Deletion logic: deleting explicitly a transaction that is part of a transfer
     # will also delete the other part of the transfer.
