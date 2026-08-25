@@ -7,6 +7,7 @@ from meyno.application.transaction import (
     create_default_transaction,
     delete_transaction,
     get_transaction_by_id,
+    update_transaction_account,
     update_transaction_date,
 )
 from meyno.database.models import Transaction
@@ -75,6 +76,25 @@ def test_update_transaction_date(session: Session):
 
     assert stored_transaction is not None
     assert stored_transaction.date == new_date
+
+
+def test_update_transaction_account(session: Session):
+    checking_account = create_account(session, "Checking")
+    savings_account = create_account(session, "Savings")
+
+    transaction = create_default_transaction(session, checking_account)
+
+    update_transaction_account(session, transaction, savings_account)
+
+    session.expire_all()
+
+    stored_transaction = get_transaction_by_id(
+        session,
+        transaction.transaction_id,
+    )
+
+    assert stored_transaction is not None
+    assert stored_transaction.account is savings_account
 
 
 def test_delete_transaction(session):
