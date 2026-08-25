@@ -57,7 +57,7 @@ def update_transaction_account(
 
 
 def update_transaction_payee(
-    session: Session, transaction: Transaction, new_payee: Payee
+    session: Session, transaction: Transaction, new_payee: Payee | None
 ) -> Transaction:
 
     transaction.payee = new_payee

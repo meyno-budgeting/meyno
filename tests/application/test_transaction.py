@@ -140,12 +140,12 @@ def test_update_transaction_amount(session: Session):
 
 def test_delete_transaction(session):
     account = create_account(session, "Checking")
+    date = datetime.date(2026, 8, 24)
+    amount = -500
 
-    transaction = Transaction(
-        date=datetime.date(2026, 8, 24),
-        account=account,
-        amount=-500,
-    )
+    transaction = create_default_transaction(session, account)
+    transaction = update_transaction_date(session, transaction, date)
+    transaction = update_transaction_amount(session, transaction, amount)
 
     session.add(transaction)
     session.flush()
@@ -156,7 +156,7 @@ def test_delete_transaction(session):
 
     session.expire_all()
 
-    assert session.get(Transaction, transaction_id) is None
+    assert get_transaction_by_id(session, transaction_id) is None
 
 
 def test_delete_transaction_deletes_transfer_transaction(session):
