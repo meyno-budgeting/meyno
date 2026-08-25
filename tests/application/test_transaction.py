@@ -3,12 +3,14 @@ import datetime
 from sqlalchemy.orm import Session
 
 from meyno.application.account import create_account
+from meyno.application.payee import create_payee
 from meyno.application.transaction import (
     create_default_transaction,
     delete_transaction,
     get_transaction_by_id,
     update_transaction_account,
     update_transaction_date,
+    update_transaction_payee,
 )
 from meyno.database.models import Transaction
 
@@ -95,6 +97,25 @@ def test_update_transaction_account(session: Session):
 
     assert stored_transaction is not None
     assert stored_transaction.account is savings_account
+
+
+def test_update_transaction_payee(session: Session):
+    checking_account = create_account(session, "Checking")
+    new_payee = create_payee(session, "Walmart")
+
+    transaction = create_default_transaction(session, checking_account)
+
+    update_transaction_payee(session, transaction, new_payee)
+
+    session.expire_all()
+
+    stored_transaction = get_transaction_by_id(
+        session,
+        transaction.transaction_id,
+    )
+
+    assert stored_transaction is not None
+    assert stored_transaction.payee is new_payee
 
 
 def test_delete_transaction(session):

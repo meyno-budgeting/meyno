@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from meyno.database.models import Account, Transaction, TransactionSplit
+from meyno.database.models import Account, Payee, Transaction, TransactionSplit
 
 
 def get_transaction_by_id(session: Session, transaction_id: int) -> Transaction | None:
@@ -50,6 +50,17 @@ def update_transaction_account(
 ) -> Transaction:
 
     transaction.account = new_account
+
+    session.flush()
+
+    return transaction
+
+
+def update_transaction_payee(
+    session: Session, transaction: Transaction, new_payee: Payee
+) -> Transaction:
+
+    transaction.payee = new_payee
 
     session.flush()
 
