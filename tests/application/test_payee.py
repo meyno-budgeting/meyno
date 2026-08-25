@@ -9,7 +9,6 @@ from meyno.application.payee import (
     get_payee_by_name,
     update_payee_name,
 )
-from meyno.database.models import Payee
 
 
 def test_create_payee(session):

@@ -3,11 +3,11 @@ import datetime
 from sqlalchemy.orm import Session
 
 from meyno.application.account import create_account
-from meyno.application.payee import create_payee
 from meyno.application.transaction import (
     create_default_transaction,
     delete_transaction,
     get_transaction_by_id,
+    update_transaction_date,
 )
 from meyno.database.models import Transaction
 
@@ -52,14 +52,42 @@ def test_get_transaction_by_id(session: Session):
     assert stored_transaction.transaction_id == transaction.transaction_id
 
 
+def test_get_transaction_by_id_not_found(session):
+    result = get_transaction_by_id(session, 999)
+
+    assert result is None
+
+
+def test_update_transaction_date(session: Session):
+    account = create_account(session, "Checking")
+    transaction = create_default_transaction(session, account)
+
+    new_date = datetime.date(2026, 8, 25)
+
+    update_transaction_date(session, transaction, new_date)
+
+    session.expire_all()
+
+    stored_transaction = get_transaction_by_id(
+        session,
+        transaction.transaction_id,
+    )
+
+    assert stored_transaction is not None
+    assert stored_transaction.date == new_date
+
+
 def test_delete_transaction(session):
     account = create_account(session, "Checking")
 
-    transaction = create_transaction(
-        session,
+    transaction = Transaction(
+        date=datetime.date(2026, 8, 24),
         account=account,
         amount=-500,
     )
+
+    session.add(transaction)
+    session.flush()
 
     transaction_id = transaction.transaction_id
 
@@ -76,13 +104,13 @@ def test_delete_transaction_deletes_transfer_transaction(session):
 
     checking_transaction = Transaction(
         account=checking,
-        date=date(2026, 8, 24),
+        date=datetime.date(2026, 8, 24),
         amount=-500,
     )
 
     savings_transaction = Transaction(
         account=savings,
-        date=date(2026, 8, 24),
+        date=datetime.date(2026, 8, 24),
         amount=500,
     )
 

@@ -9,7 +9,6 @@ from meyno.application.category import (
     get_category_by_name,
     update_category_name,
 )
-from meyno.database.models import Category
 
 
 def test_create_category(session):
