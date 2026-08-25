@@ -15,7 +15,7 @@ from meyno.database.models import Category
 def test_create_category(session):
     category = create_category(session, "Groceries")
 
-    stored_category = session.get(Category, category.category_id)
+    stored_category = get_category_by_id(session, category.category_id)
 
     assert stored_category is not None
     assert stored_category.name == "Groceries"
@@ -41,7 +41,7 @@ def test_create_category_strips_name(session):
 
     session.expire_all()
 
-    stored_category = session.get(Category, category.category_id)
+    stored_category = get_category_by_id(session, category.category_id)
 
     assert stored_category is not None
     assert stored_category.name == "Groceries"
@@ -89,7 +89,7 @@ def test_update_category_name(session):
 
     session.expire_all()
 
-    stored_category = session.get(Category, category.category_id)
+    stored_category = get_category_by_id(session, category.category_id)
 
     assert stored_category is not None
     assert stored_category.name == "Fun"
@@ -135,7 +135,7 @@ def test_update_category_name_strips_name(session):
 
     session.expire_all()
 
-    stored_category = session.get(Category, category.category_id)
+    stored_category = get_category_by_id(session, category.category_id)
 
     assert stored_category is not None
     assert stored_category.name == "Fun"
@@ -148,4 +148,4 @@ def test_delete_category(session):
 
     session.expire_all()
 
-    assert session.get(Category, category.category_id) is None
+    assert get_category_by_id(session, category.category_id) is None

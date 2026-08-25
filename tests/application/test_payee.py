@@ -15,7 +15,7 @@ from meyno.database.models import Payee
 def test_create_payee(session):
     payee = create_payee(session, "Walmart")
 
-    stored_payee = session.get(Payee, payee.payee_id)
+    stored_payee = get_payee_by_id(session, payee.payee_id)
 
     assert stored_payee is not None
     assert stored_payee.name == "Walmart"
@@ -41,7 +41,7 @@ def test_create_payee_strips_name(session):
 
     session.expire_all()
 
-    stored_payee = session.get(Payee, payee.payee_id)
+    stored_payee = get_payee_by_id(session, payee.payee_id)
 
     assert stored_payee is not None
     assert stored_payee.name == "Walmart"
@@ -89,7 +89,7 @@ def test_update_payee_name(session):
 
     session.expire_all()
 
-    stored_payee = session.get(Payee, payee.payee_id)
+    stored_payee = get_payee_by_id(session, payee.payee_id)
 
     assert stored_payee is not None
     assert stored_payee.name == "GameStop"
@@ -133,7 +133,7 @@ def test_update_payee_name_strips_name(session):
 
     session.expire_all()
 
-    stored_payee = session.get(Payee, payee.payee_id)
+    stored_payee = get_payee_by_id(session, payee.payee_id)
 
     assert stored_payee is not None
     assert stored_payee.name == "GameStop"
@@ -146,4 +146,4 @@ def test_delete_payee(session):
 
     session.expire_all()
 
-    assert session.get(Payee, payee.payee_id) is None
+    assert get_payee_by_id(session, payee.payee_id) is None

@@ -16,7 +16,7 @@ from meyno.database.models import Account, Transaction
 def test_create_account(session):
     account = create_account(session, "Checking")
 
-    stored_account = session.get(Account, account.account_id)
+    stored_account = get_account_by_id(session, account.account_id)
 
     assert stored_account is not None
     assert stored_account.name == "Checking"
@@ -42,7 +42,7 @@ def test_create_account_strips_name(session):
 
     session.expire_all()
 
-    stored_account = session.get(Account, account.account_id)
+    stored_account = get_account_by_id(session, account.account_id)
 
     assert stored_account is not None
     assert stored_account.name == "Checking"
@@ -90,7 +90,7 @@ def test_update_account_name(session):
 
     session.expire_all()
 
-    stored_account = session.get(Account, account.account_id)
+    stored_account = get_account_by_id(session, account.account_id)
 
     assert stored_account is not None
     assert stored_account.name == "Savings"
@@ -134,7 +134,7 @@ def test_update_account_name_strips_name(session):
 
     session.expire_all()
 
-    stored_account = session.get(Account, account.account_id)
+    stored_account = get_account_by_id(session, account.account_id)
 
     assert stored_account is not None
     assert stored_account.name == "Savings"
@@ -147,7 +147,7 @@ def test_delete_account(session):
 
     session.expire_all()
 
-    assert session.get(Account, account.account_id) is None
+    assert get_account_by_id(session, account.account_id) is None
 
 
 def test_delete_account_deletes_transactions(session):
