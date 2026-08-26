@@ -14,6 +14,7 @@ from meyno.application.transaction import (
     update_transaction_date,
     update_transaction_notes,
     update_transaction_payee,
+    update_transaction_split_amount,
     update_transaction_split_category,
 )
 from meyno.database.models import Transaction, TransactionSplit
@@ -255,3 +256,27 @@ def test_update_transaction_split_category(session: Session):
     assert stored_transaction is not None
     assert len(stored_transaction.splits) == 1
     assert stored_transaction.splits[0].category is new_category
+
+
+def test_update_transaction_split_amount(session: Session):
+    account = create_account(session, "Checking")
+    transaction = create_default_transaction(session, account)
+    new_amount = 8000
+
+    session.flush()
+
+    split = transaction.splits[0]
+
+    update_transaction_split_amount(split, new_amount)
+
+    session.commit()
+    session.expire_all()
+
+    stored_transaction = get_transaction_by_id(
+        session,
+        transaction.transaction_id,
+    )
+
+    assert stored_transaction is not None
+    assert len(stored_transaction.splits) == 1
+    assert stored_transaction.splits[0].amount == 8000

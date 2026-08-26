@@ -145,3 +145,11 @@ def update_transaction_split_category(
     split.category = new_category
 
     return split
+
+
+def update_transaction_split_amount(
+    split: TransactionSplit, new_amount: int
+) -> TransactionSplit:
+
+    split.amount = new_amount
+    return split
