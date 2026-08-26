@@ -3,7 +3,13 @@ import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from meyno.database.models import Account, Payee, Transaction, TransactionSplit
+from meyno.database.models import (
+    Account,
+    Category,
+    Payee,
+    Transaction,
+    TransactionSplit,
+)
 
 
 def get_transaction_by_id(session: Session, transaction_id: int) -> Transaction | None:
@@ -61,7 +67,17 @@ def update_transaction_amount(transaction: Transaction, new_amount: int) -> Tran
 
     if len(transaction.splits) == 1:
         # "Normal" non-transfer transaction
+        # Update the only split amount as well
         transaction.splits[0].amount = new_amount
+    elif len(transaction.splits) > 1:
+        # "Split" non-transfer transaction
+        # TODO: Logic for adding a split with appropiate positive or negative
+        # amount to make sum of splits equal to transaction amount
+        pass
+    else:
+        # Transfer transaction
+        # TODO: Logic for modifying other side of transfer's amount
+        pass
 
     return transaction
 
@@ -112,5 +128,14 @@ def create_default_transaction_split(
     )
 
     session.add(split)
+
+    return split
+
+
+def update_transaction_split_category(
+    split: TransactionSplit, new_category: Category
+) -> TransactionSplit:
+
+    split.category = new_category
 
     return split

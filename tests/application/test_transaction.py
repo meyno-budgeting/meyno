@@ -3,6 +3,7 @@ import datetime
 from sqlalchemy.orm import Session
 
 from meyno.application.account import create_account
+from meyno.application.category import create_category
 from meyno.application.payee import create_payee
 from meyno.application.transaction import (
     create_default_transaction,
@@ -12,8 +13,9 @@ from meyno.application.transaction import (
     update_transaction_amount,
     update_transaction_date,
     update_transaction_payee,
+    update_transaction_split_category,
 )
-from meyno.database.models import Transaction
+from meyno.database.models import Transaction, TransactionSplit
 
 
 def test_create_default_transaction(session: Session):
@@ -206,3 +208,27 @@ def test_delete_transaction_deletes_transfer_transaction(session):
 
     assert get_transaction_by_id(session, checking_transaction_id) is None
     assert get_transaction_by_id(session, savings_transaction_id) is None
+
+
+def test_update_transaction_split_category(session: Session):
+    account = create_account(session, "Checking")
+    transaction = create_default_transaction(session, account)
+    new_category = create_category(session, "Groceries")
+
+    session.flush()
+
+    split = transaction.splits[0]
+
+    update_transaction_split_category(split, new_category)
+
+    session.commit()
+    session.expire_all()
+
+    stored_transaction = get_transaction_by_id(
+        session,
+        transaction.transaction_id,
+    )
+
+    assert stored_transaction is not None
+    assert len(stored_transaction.splits) == 1
+    assert stored_transaction.splits[0].category is new_category
