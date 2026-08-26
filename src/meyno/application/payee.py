@@ -34,7 +34,6 @@ def create_payee(session: Session, name: str) -> Payee:
     payee = Payee(name=name)
 
     session.add(payee)
-    session.flush()
 
     return payee
 
@@ -55,11 +54,9 @@ def update_payee_name(session: Session, payee: Payee, new_name: str) -> Payee:
         raise ValueError(msg)
 
     payee.name = new_name
-    session.flush()
 
     return payee
 
 
 def delete_payee(session: Session, payee: Payee) -> None:
     session.delete(payee)
-    session.flush()

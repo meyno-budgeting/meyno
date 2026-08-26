@@ -66,6 +66,8 @@ def test_get_category_by_id(session):
 def test_get_category_by_name(session):
     category = create_category(session, "Groceries")
 
+    session.flush()
+
     result = get_category_by_name(session, "Groceries")
 
     assert result is not None

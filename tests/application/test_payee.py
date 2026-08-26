@@ -14,6 +14,8 @@ from meyno.application.payee import (
 def test_create_payee(session):
     payee = create_payee(session, "Walmart")
 
+    session.flush()
+
     stored_payee = get_payee_by_id(session, payee.payee_id)
 
     assert stored_payee is not None
@@ -36,6 +38,8 @@ def test_create_duplicate_payee(session):
 def test_create_payee_strips_name(session):
     payee = create_payee(session, "  Walmart    ")
 
+    session.flush()
+
     assert payee.name == "Walmart"
 
     session.expire_all()
@@ -49,6 +53,8 @@ def test_create_payee_strips_name(session):
 def test_get_payee_by_id(session):
     payee = create_payee(session, "Walmart")
 
+    session.flush()
+
     result = get_payee_by_id(session, payee.payee_id)
 
     assert result is not None
@@ -58,6 +64,8 @@ def test_get_payee_by_id(session):
 
 def test_get_payee_by_name(session):
     payee = create_payee(session, "Walmart")
+
+    session.flush()
 
     result = get_payee_by_name(session, "Walmart")
 
@@ -81,11 +89,14 @@ def test_get_payee_by_name_not_found(session):
 def test_update_payee_name(session):
     payee = create_payee(session, "Walmart")
 
+    session.flush()
+
     updated_payee = update_payee_name(session, payee, "GameStop")
 
     assert updated_payee is payee
     assert updated_payee.name == "GameStop"
 
+    session.commit()
     session.expire_all()
 
     stored_payee = get_payee_by_id(session, payee.payee_id)
@@ -126,10 +137,13 @@ def test_update_payee_name_duplicate(session):
 def test_update_payee_name_strips_name(session):
     payee = create_payee(session, "Walmart")
 
+    session.flush()
+
     result = update_payee_name(session, payee, "  GameStop  ")
 
     assert result.name == "GameStop"
 
+    session.commit()
     session.expire_all()
 
     stored_payee = get_payee_by_id(session, payee.payee_id)
@@ -141,8 +155,11 @@ def test_update_payee_name_strips_name(session):
 def test_delete_payee(session):
     payee = create_payee(session, "Walmart")
 
+    session.flush()
+
     assert delete_payee(session, payee) is None
 
+    session.commit()
     session.expire_all()
 
     assert get_payee_by_id(session, payee.payee_id) is None
