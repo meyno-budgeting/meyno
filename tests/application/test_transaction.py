@@ -7,6 +7,7 @@ from meyno.application.category import create_category
 from meyno.application.payee import create_payee
 from meyno.application.transaction import (
     create_default_transaction,
+    create_default_transaction_split,
     delete_transaction,
     get_transaction_by_id,
     update_transaction_account,
@@ -24,8 +25,6 @@ def test_create_default_transaction(session: Session):
     expected_date = datetime.datetime.now().astimezone().date()
 
     account = create_account(session, "Checking")
-    session.flush()
-
     transaction = create_default_transaction(session, account)
 
     session.commit()
@@ -232,6 +231,27 @@ def test_delete_transaction_deletes_transfer_transaction(session: Session):
 
     assert get_transaction_by_id(session, checking_transaction_id) is None
     assert get_transaction_by_id(session, savings_transaction_id) is None
+
+
+def test_create_default_transaction_split(session: Session):
+    account = create_account(session, "Checking")
+    transaction = create_default_transaction(session, account)
+
+    session.flush()
+
+    new_split = create_default_transaction_split(session, transaction)
+
+    session.commit()
+    session.expire_all()
+
+    stored_transaction = get_transaction_by_id(session, transaction.transaction_id)
+
+    assert len(stored_transaction.splits) == 2
+    assert stored_transaction.splits[1] is new_split
+    assert stored_transaction.splits[1].transaction is stored_transaction
+    assert stored_transaction.splits[1].category is None
+    assert stored_transaction.splits[1].amount == stored_transaction.amount
+    assert stored_transaction.splits[1].transaction_split_id is not None
 
 
 def test_update_transaction_split_category(session: Session):
