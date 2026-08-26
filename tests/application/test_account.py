@@ -16,6 +16,8 @@ from meyno.database.models import Account, Transaction
 def test_create_account(session):
     account = create_account(session, "Checking")
 
+    session.flush()
+
     stored_account = get_account_by_id(session, account.account_id)
 
     assert stored_account is not None
@@ -38,6 +40,8 @@ def test_create_duplicate_account(session):
 def test_create_account_strips_name(session):
     account = create_account(session, "  Checking    ")
 
+    session.flush()
+
     assert account.name == "Checking"
 
     session.expire_all()
@@ -50,6 +54,8 @@ def test_create_account_strips_name(session):
 
 def test_get_account_by_id(session):
     account = create_account(session, "Checking")
+
+    session.flush()
 
     result = get_account_by_id(session, account.account_id)
 
@@ -83,11 +89,14 @@ def test_get_account_by_name_not_found(session):
 def test_update_account_name(session):
     account = create_account(session, "Checking")
 
+    session.flush()
+
     updated_account = update_account_name(session, account, "Savings")
 
     assert updated_account is account
     assert updated_account.name == "Savings"
 
+    session.commit()
     session.expire_all()
 
     stored_account = get_account_by_id(session, account.account_id)
@@ -128,10 +137,13 @@ def test_update_account_name_duplicate(session):
 def test_update_account_name_strips_name(session):
     account = create_account(session, "Checking")
 
+    session.flush()
+
     result = update_account_name(session, account, "  Savings  ")
 
     assert result.name == "Savings"
 
+    session.commit()
     session.expire_all()
 
     stored_account = get_account_by_id(session, account.account_id)
@@ -143,8 +155,11 @@ def test_update_account_name_strips_name(session):
 def test_delete_account(session):
     account = create_account(session, "Checking")
 
+    session.flush()
+
     assert delete_account(session, account) is None
 
+    session.commit()
     session.expire_all()
 
     assert get_account_by_id(session, account.account_id) is None
@@ -197,7 +212,6 @@ def test_delete_account_preserves_incoming_transfer_transaction(session):
     )
 
     session.add_all([checking_transaction, savings_transaction])
-    session.flush()
 
     checking_transaction.transfer_transaction = savings_transaction
     session.flush()
@@ -206,6 +220,7 @@ def test_delete_account_preserves_incoming_transfer_transaction(session):
 
     delete_account(session, checking)
 
+    session.commit()
     session.expire_all()
 
     stored_savings_transaction = session.get(
@@ -234,7 +249,6 @@ def test_delete_account_preserves_outgoing_transfer_transaction(session):
     )
 
     session.add_all([checking_transaction, savings_transaction])
-    session.flush()
 
     checking_transaction.transfer_transaction = savings_transaction
     session.flush()
@@ -243,6 +257,7 @@ def test_delete_account_preserves_outgoing_transfer_transaction(session):
 
     delete_account(session, savings)
 
+    session.commit()
     session.expire_all()
 
     stored_checking_transaction = session.get(

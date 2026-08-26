@@ -34,7 +34,6 @@ def create_account(session: Session, name: str) -> Account:
     account = Account(name=name)
 
     session.add(account)
-    session.flush()
 
     return account
 
@@ -55,7 +54,6 @@ def update_account_name(session: Session, account: Account, new_name: str) -> Ac
         raise ValueError(msg)
 
     account.name = new_name
-    session.flush()
 
     return account
 
@@ -82,7 +80,7 @@ def delete_account(session: Session, account: Account) -> None:
             if outgoing is not None:
                 outgoing.transfer_transaction = None
 
-    session.flush()
+    # session.flush()
 
     session.delete(account)
-    session.flush()
+    # session.flush()
