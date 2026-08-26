@@ -29,7 +29,7 @@ def create_default_transaction(session: Session, account: Account) -> Transactio
 
 
 def update_transaction_date(
-    session: Session, transaction: Transaction, new_date: datetime.date
+    transaction: Transaction, new_date: datetime.date
 ) -> Transaction:
 
     transaction.date = new_date
@@ -38,7 +38,7 @@ def update_transaction_date(
 
 
 def update_transaction_account(
-    session: Session, transaction: Transaction, new_account: Account
+    transaction: Transaction, new_account: Account
 ) -> Transaction:
 
     transaction.account = new_account
@@ -47,7 +47,7 @@ def update_transaction_account(
 
 
 def update_transaction_payee(
-    session: Session, transaction: Transaction, new_payee: Payee | None
+    transaction: Transaction, new_payee: Payee | None
 ) -> Transaction:
 
     transaction.payee = new_payee
@@ -55,9 +55,7 @@ def update_transaction_payee(
     return transaction
 
 
-def update_transaction_amount(
-    session: Session, transaction: Transaction, new_amount: int
-) -> Transaction:
+def update_transaction_amount(transaction: Transaction, new_amount: int) -> Transaction:
 
     transaction.amount = new_amount
 
@@ -90,7 +88,6 @@ def delete_transaction(session: Session, transaction: Transaction) -> None:
         if outgoing is None:
             # This transaction is not part of a transfer.
             session.delete(transaction)
-            session.flush()
             return
 
         # This transaction is the incoming side.
@@ -98,12 +95,10 @@ def delete_transaction(session: Session, transaction: Transaction) -> None:
 
     # Break the transfer relationship before deleting either transaction.
     outgoing.transfer_transaction = None
-    session.flush()
 
     # Delete both sides of the transfer.
     session.delete(outgoing)
     session.delete(incoming)
-    session.flush()
 
 
 def create_default_transaction_split(

@@ -74,7 +74,7 @@ def test_update_transaction_date(session: Session):
 
     new_date = datetime.date(2026, 8, 25)
 
-    update_transaction_date(session, transaction, new_date)
+    update_transaction_date(transaction, new_date)
 
     session.commit()
     session.expire_all()
@@ -96,7 +96,7 @@ def test_update_transaction_account(session: Session):
 
     session.flush()
 
-    update_transaction_account(session, transaction, savings_account)
+    update_transaction_account(transaction, savings_account)
 
     session.commit()
     session.expire_all()
@@ -118,7 +118,7 @@ def test_update_transaction_payee(session: Session):
 
     session.flush()
 
-    update_transaction_payee(session, transaction, new_payee)
+    update_transaction_payee(transaction, new_payee)
 
     session.commit()
     session.expire_all()
@@ -140,7 +140,7 @@ def test_update_transaction_amount(session: Session):
 
     session.flush()
 
-    update_transaction_amount(session, transaction, new_amount)
+    update_transaction_amount(transaction, new_amount)
 
     session.commit()
     session.expire_all()
@@ -160,8 +160,8 @@ def test_delete_transaction(session):
     amount = -500
 
     transaction = create_default_transaction(session, account)
-    transaction = update_transaction_date(session, transaction, date)
-    transaction = update_transaction_amount(session, transaction, amount)
+    transaction = update_transaction_date(transaction, date)
+    transaction = update_transaction_amount(transaction, amount)
 
     session.flush()
 
@@ -169,6 +169,7 @@ def test_delete_transaction(session):
 
     delete_transaction(session, transaction)
 
+    session.commit()
     session.expire_all()
 
     assert get_transaction_by_id(session, transaction_id) is None
@@ -200,7 +201,8 @@ def test_delete_transaction_deletes_transfer_transaction(session):
 
     delete_transaction(session, checking_transaction)
 
+    session.commit()
     session.expire_all()
 
-    assert session.get(Transaction, checking_transaction_id) is None
-    assert session.get(Transaction, savings_transaction_id) is None
+    assert get_transaction_by_id(session, checking_transaction_id) is None
+    assert get_transaction_by_id(session, savings_transaction_id) is None
