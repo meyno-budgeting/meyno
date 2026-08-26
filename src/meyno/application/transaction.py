@@ -82,6 +82,12 @@ def update_transaction_amount(transaction: Transaction, new_amount: int) -> Tran
     return transaction
 
 
+def update_transaction_notes(transaction: Transaction, new_notes: str) -> Transaction:
+    transaction.notes = new_notes
+
+    return new_notes
+
+
 def delete_transaction(session: Session, transaction: Transaction) -> None:
     # Deletion logic: deleting explicitly a transaction that is part of a transfer
     # will also delete the other part of the transfer.

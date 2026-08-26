@@ -12,6 +12,7 @@ from meyno.application.transaction import (
     update_transaction_account,
     update_transaction_amount,
     update_transaction_date,
+    update_transaction_notes,
     update_transaction_payee,
     update_transaction_split_category,
 )
@@ -156,7 +157,29 @@ def test_update_transaction_amount(session: Session):
     assert stored_transaction.amount == new_amount
 
 
-def test_delete_transaction(session):
+def test_update_transaction_notes(session: Session):
+    checking_account = create_account(session, "Checking")
+    new_notes = "This is a note"
+
+    transaction = create_default_transaction(session, checking_account)
+
+    session.flush()
+
+    update_transaction_notes(transaction, new_notes)
+
+    session.commit()
+    session.expire_all()
+
+    stored_transaction = get_transaction_by_id(
+        session,
+        transaction.transaction_id,
+    )
+
+    assert stored_transaction is not None
+    assert stored_transaction.notes == new_notes
+
+
+def test_delete_transaction(session: Session):
     account = create_account(session, "Checking")
     date = datetime.date(2026, 8, 24)
     amount = -500
@@ -177,7 +200,7 @@ def test_delete_transaction(session):
     assert get_transaction_by_id(session, transaction_id) is None
 
 
-def test_delete_transaction_deletes_transfer_transaction(session):
+def test_delete_transaction_deletes_transfer_transaction(session: Session):
     checking = create_account(session, "Checking")
     savings = create_account(session, "Savings")
 
