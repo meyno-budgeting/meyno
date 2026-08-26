@@ -20,11 +20,14 @@ def test_create_default_transaction(session: Session):
     expected_date = datetime.datetime.now().astimezone().date()
 
     account = create_account(session, "Checking")
+    session.flush()
+
     transaction = create_default_transaction(session, account)
 
+    session.commit()
     session.expire_all()
 
-    stored_transaction = session.get(Transaction, transaction.transaction_id)
+    stored_transaction = get_transaction_by_id(session, transaction.transaction_id)
 
     assert stored_transaction is not None
     assert stored_transaction.account is account
@@ -45,6 +48,7 @@ def test_get_transaction_by_id(session: Session):
     account = create_account(session, "Checking")
     transaction = create_default_transaction(session, account)
 
+    session.commit()
     session.expire_all()
 
     stored_transaction = get_transaction_by_id(
@@ -66,10 +70,13 @@ def test_update_transaction_date(session: Session):
     account = create_account(session, "Checking")
     transaction = create_default_transaction(session, account)
 
+    session.flush()
+
     new_date = datetime.date(2026, 8, 25)
 
     update_transaction_date(session, transaction, new_date)
 
+    session.commit()
     session.expire_all()
 
     stored_transaction = get_transaction_by_id(
@@ -87,8 +94,11 @@ def test_update_transaction_account(session: Session):
 
     transaction = create_default_transaction(session, checking_account)
 
+    session.flush()
+
     update_transaction_account(session, transaction, savings_account)
 
+    session.commit()
     session.expire_all()
 
     stored_transaction = get_transaction_by_id(
@@ -106,8 +116,11 @@ def test_update_transaction_payee(session: Session):
 
     transaction = create_default_transaction(session, checking_account)
 
+    session.flush()
+
     update_transaction_payee(session, transaction, new_payee)
 
+    session.commit()
     session.expire_all()
 
     stored_transaction = get_transaction_by_id(
@@ -125,8 +138,11 @@ def test_update_transaction_amount(session: Session):
 
     transaction = create_default_transaction(session, checking_account)
 
+    session.flush()
+
     update_transaction_amount(session, transaction, new_amount)
 
+    session.commit()
     session.expire_all()
 
     stored_transaction = get_transaction_by_id(
@@ -147,7 +163,6 @@ def test_delete_transaction(session):
     transaction = update_transaction_date(session, transaction, date)
     transaction = update_transaction_amount(session, transaction, amount)
 
-    session.add(transaction)
     session.flush()
 
     transaction_id = transaction.transaction_id

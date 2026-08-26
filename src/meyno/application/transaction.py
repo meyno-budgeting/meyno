@@ -21,15 +21,9 @@ def create_default_transaction(session: Session, account: Account) -> Transactio
         notes=None,
     )
 
-    transaction.splits = [
-        TransactionSplit(
-            category=None,
-            amount=0,
-        ),
-    ]
-
     session.add(transaction)
-    session.flush()
+
+    create_default_transaction_split(session, transaction)
 
     return transaction
 
@@ -40,8 +34,6 @@ def update_transaction_date(
 
     transaction.date = new_date
 
-    session.flush()
-
     return transaction
 
 
@@ -50,8 +42,6 @@ def update_transaction_account(
 ) -> Transaction:
 
     transaction.account = new_account
-
-    session.flush()
 
     return transaction
 
@@ -62,8 +52,6 @@ def update_transaction_payee(
 
     transaction.payee = new_payee
 
-    session.flush()
-
     return transaction
 
 
@@ -73,7 +61,9 @@ def update_transaction_amount(
 
     transaction.amount = new_amount
 
-    session.flush()
+    if len(transaction.splits) == 1:
+        # "Normal" non-transfer transaction
+        transaction.splits[0].amount = new_amount
 
     return transaction
 
@@ -114,3 +104,18 @@ def delete_transaction(session: Session, transaction: Transaction) -> None:
     session.delete(outgoing)
     session.delete(incoming)
     session.flush()
+
+
+def create_default_transaction_split(
+    session: Session, transaction: Transaction
+) -> TransactionSplit:
+
+    split = TransactionSplit(
+        transaction=transaction,
+        category=None,
+        amount=0,
+    )
+
+    session.add(split)
+
+    return split
