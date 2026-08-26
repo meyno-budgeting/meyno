@@ -14,6 +14,8 @@ from meyno.application.category import (
 def test_create_category(session):
     category = create_category(session, "Groceries")
 
+    session.flush()
+
     stored_category = get_category_by_id(session, category.category_id)
 
     assert stored_category is not None
@@ -29,6 +31,8 @@ def test_create_category_empty_name(session):
 def test_create_duplicate_category(session):
     create_category(session, "Groceries")
 
+    session.flush()
+
     with pytest.raises(ValueError, match="Category already exists: Groceries"):
         create_category(session, "Groceries")
 
@@ -38,6 +42,7 @@ def test_create_category_strips_name(session):
 
     assert category.name == "Groceries"
 
+    session.commit()
     session.expire_all()
 
     stored_category = get_category_by_id(session, category.category_id)
@@ -48,6 +53,8 @@ def test_create_category_strips_name(session):
 
 def test_get_category_by_id(session):
     category = create_category(session, "Groceries")
+
+    session.flush()
 
     result = get_category_by_id(session, category.category_id)
 
@@ -86,6 +93,7 @@ def test_update_category_name(session):
     assert updated_category is category
     assert updated_category.name == "Fun"
 
+    session.commit()
     session.expire_all()
 
     stored_category = get_category_by_id(session, category.category_id)
@@ -132,6 +140,7 @@ def test_update_category_name_strips_name(session):
 
     assert result.name == "Fun"
 
+    session.commit()
     session.expire_all()
 
     stored_category = get_category_by_id(session, category.category_id)
@@ -142,9 +151,11 @@ def test_update_category_name_strips_name(session):
 
 def test_delete_category(session):
     category = create_category(session, "Groceries")
+    session.flush()
 
     assert delete_category(session, category) is None
 
+    session.commit()
     session.expire_all()
 
     assert get_category_by_id(session, category.category_id) is None

@@ -34,7 +34,6 @@ def create_category(session: Session, name: str) -> Category:
     category = Category(name=name)
 
     session.add(category)
-    session.flush()
 
     return category
 
@@ -58,11 +57,9 @@ def update_category_name(
         raise ValueError(msg)
 
     category.name = new_name
-    session.flush()
 
     return category
 
 
 def delete_category(session: Session, category: Category) -> None:
     session.delete(category)
-    session.flush()
