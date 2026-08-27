@@ -9,6 +9,7 @@ from meyno.application.transaction import (
     create_default_transaction,
     create_default_transaction_split,
     delete_transaction,
+    delete_transaction_split,
     get_transaction_by_id,
     update_transaction_account,
     update_transaction_amount,
@@ -237,8 +238,6 @@ def test_create_default_transaction_split(session: Session):
     account = create_account(session, "Checking")
     transaction = create_default_transaction(session, account)
 
-    session.flush()
-
     new_split = create_default_transaction_split(session, transaction)
 
     session.commit()
@@ -300,3 +299,28 @@ def test_update_transaction_split_amount(session: Session):
     assert stored_transaction is not None
     assert len(stored_transaction.splits) == 1
     assert stored_transaction.splits[0].amount == 8000
+
+
+def test_delete_transaction_split(session: Session):
+    account = create_account(session, "Checking")
+    transaction = create_default_transaction(session, account)
+    new_split = create_default_transaction_split(session, transaction)
+
+    session.flush()
+
+    default_split_id = transaction.splits[0].transaction_split_id
+    new_split_id = new_split.transaction_split_id
+
+    delete_transaction_split(session, new_split)
+
+    session.commit()
+    session.expire_all()
+
+    stored_transaction = get_transaction_by_id(session, transaction.transaction_id)
+    queried_split = session.get(TransactionSplit, new_split_id)
+    remaining_split = session.get(TransactionSplit, default_split_id)
+
+    assert stored_transaction is not None
+    assert queried_split is None
+    assert remaining_split is not None
+    assert len(stored_transaction.splits) == 1

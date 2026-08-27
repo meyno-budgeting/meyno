@@ -153,3 +153,7 @@ def update_transaction_split_amount(
 
     split.amount = new_amount
     return split
+
+
+def delete_transaction_split(session: Session, split: TransactionSplit) -> None:
+    session.delete(split)
