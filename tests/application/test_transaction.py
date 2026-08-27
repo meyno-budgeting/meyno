@@ -11,6 +11,7 @@ from meyno.application.transaction import (
     delete_transaction,
     delete_transaction_split,
     get_transaction_by_id,
+    get_transaction_split_by_id,
     update_transaction_account,
     update_transaction_amount,
     update_transaction_date,
@@ -251,6 +252,29 @@ def test_create_default_transaction_split(session: Session):
     assert stored_transaction.splits[1].category is None
     assert stored_transaction.splits[1].amount == stored_transaction.amount
     assert stored_transaction.splits[1].transaction_split_id is not None
+
+
+def test_get_transaction_split_by_id(session: Session):
+    account = create_account(session, "Checking")
+    transaction = create_default_transaction(session, account)
+
+    session.commit()
+    session.expire_all()
+
+    split_id = transaction.splits[0].transaction_split_id
+
+    stored_transaction_split = get_transaction_split_by_id(
+        session,
+        split_id,
+    )
+
+    assert stored_transaction_split is not None
+    assert stored_transaction_split.transaction is transaction
+    assert stored_transaction_split.transaction_split_id == split_id
+
+
+def test_get_transaction_split_by_id_not_found(session: Session):
+    assert get_transaction_by_id(session, 9999) is None
 
 
 def test_update_transaction_split_category(session: Session):

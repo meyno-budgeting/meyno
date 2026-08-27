@@ -123,6 +123,12 @@ def delete_transaction(session: Session, transaction: Transaction) -> None:
     session.delete(incoming)
 
 
+def get_transaction_split_by_id(
+    session: Session, split_id: int
+) -> TransactionSplit | None:
+    return session.get(TransactionSplit, split_id)
+
+
 def create_default_transaction_split(
     session: Session, transaction: Transaction
 ) -> TransactionSplit:
