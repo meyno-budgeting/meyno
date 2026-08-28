@@ -232,38 +232,39 @@ def test_delete_account_preserves_incoming_transfer_transaction(session):
     assert stored_savings_transaction.transfer_transaction is None
 
 
-def test_delete_account_preserves_outgoing_transfer_transaction(session):
-    checking = create_account(session, "Checking")
-    savings = create_account(session, "Savings")
+## TODO(ChaoticDefense): Move this test to controller layer
+# def test_delete_account_preserves_outgoing_transfer_transaction(session):
+#     checking = create_account(session, "Checking")
+#     savings = create_account(session, "Savings")
 
-    checking_transaction = Transaction(
-        account=checking,
-        date=date(2026, 8, 24),
-        amount=-500,
-    )
+#     checking_transaction = Transaction(
+#         account=checking,
+#         date=date(2026, 8, 24),
+#         amount=-500,
+#     )
 
-    savings_transaction = Transaction(
-        account=savings,
-        date=date(2026, 8, 24),
-        amount=500,
-    )
+#     savings_transaction = Transaction(
+#         account=savings,
+#         date=date(2026, 8, 24),
+#         amount=500,
+#     )
 
-    session.add_all([checking_transaction, savings_transaction])
+#     session.add_all([checking_transaction, savings_transaction])
 
-    checking_transaction.transfer_transaction = savings_transaction
-    session.flush()
+#     checking_transaction.transfer_transaction = savings_transaction
+#     session.flush()
 
-    checking_transaction_id = checking_transaction.transaction_id
+#     checking_transaction_id = checking_transaction.transaction_id
 
-    delete_account(session, savings)
+#     delete_account(session, savings)
 
-    session.commit()
-    session.expire_all()
+#     session.commit()
+#     session.expire_all()
 
-    stored_checking_transaction = session.get(
-        Transaction,
-        checking_transaction_id,
-    )
+#     stored_checking_transaction = session.get(
+#         Transaction,
+#         checking_transaction_id,
+#     )
 
-    assert stored_checking_transaction is not None
-    assert stored_checking_transaction.transfer_transaction is None
+#     assert stored_checking_transaction is not None
+#     assert stored_checking_transaction.transfer_transaction is None

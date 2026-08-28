@@ -1,6 +1,5 @@
 import datetime
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from meyno.database.models import (
@@ -11,6 +10,7 @@ from meyno.database.models import (
     TransactionSplit,
 )
 
+## Logic when a transaction amount is updated
 # TODO(ChaoticDefense): In either here or GUI layer, have logic for before/after updating
 # a transaction split amount
 # if len(transaction.splits) == 1:
@@ -26,6 +26,41 @@ from meyno.database.models import (
 #     # Transfer transaction
 #     # Logic for modifying other side of transfer's amount
 #     pass
+
+## Deleting Transaction Logic
+# TODO(ChaoticDefense): Move this to controller layer
+
+# Deletion logic: deleting explicitly a transaction that is part of a transfer
+# will also delete the other part of the transfer.
+# Deleting a whole account will instead break the chain and delete all transactions
+# in the account, while keeping the other side in tact.
+# # Check if transaction was part of a transfer
+# if transaction.transfer_transaction is not None:
+#     # This transaction is the outgoing side.
+#     outgoing = transaction
+#     incoming = transaction.transfer_transaction
+# else:
+#     # Check whether this transaction is the incoming side.
+#     outgoing = session.scalars(
+#         select(Transaction).where(
+#             Transaction.transfer_transaction_id == transaction.transaction_id
+#         )
+#     ).first()
+
+#     if outgoing is None:
+#         # This transaction is not part of a transfer.
+#         session.delete(transaction)
+#         return
+
+#     # This transaction is the incoming side.
+#     incoming = transaction
+
+# # Break the transfer relationship before deleting either transaction.
+# outgoing.transfer_transaction = None
+
+# # Delete both sides of the transfer.
+# session.delete(outgoing)
+# session.delete(incoming)
 
 
 def get_transaction_by_id(session: Session, transaction_id: int) -> Transaction | None:
@@ -150,41 +185,7 @@ def convert_transfer_to_transaction(
 
 
 def delete_transaction(session: Session, transaction: Transaction) -> None:
-    # TODO(ChaoticDefense): May make this function dumber to have controller do
-    # most of the determining/finding of other side of transfer
-
-    # Deletion logic: deleting explicitly a transaction that is part of a transfer
-    # will also delete the other part of the transfer.
-    # Deleting a whole account will instead break the chain and delete all transactions
-    # in the account, while keeping the other side in tact.
-
-    # Check if transaction was part of a transfer
-    if transaction.transfer_transaction is not None:
-        # This transaction is the outgoing side.
-        outgoing = transaction
-        incoming = transaction.transfer_transaction
-    else:
-        # Check whether this transaction is the incoming side.
-        outgoing = session.scalars(
-            select(Transaction).where(
-                Transaction.transfer_transaction_id == transaction.transaction_id
-            )
-        ).first()
-
-        if outgoing is None:
-            # This transaction is not part of a transfer.
-            session.delete(transaction)
-            return
-
-        # This transaction is the incoming side.
-        incoming = transaction
-
-    # Break the transfer relationship before deleting either transaction.
-    outgoing.transfer_transaction = None
-
-    # Delete both sides of the transfer.
-    session.delete(outgoing)
-    session.delete(incoming)
+    session.delete(transaction)
 
 
 def get_transaction_split_by_id(
