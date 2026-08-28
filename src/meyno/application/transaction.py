@@ -104,6 +104,9 @@ def convert_transaction_to_transfer(
     session: Session, transaction: Transaction, transfer_account: Account
 ) -> Transaction:
 
+    if transaction.transfer_transaction is not None:
+        raise ValueError("Transaction is already a transfer.")
+
     # Create a transaction in other account
     transfer_transaction = create_default_transaction(session, transfer_account)
 
@@ -117,6 +120,29 @@ def convert_transaction_to_transfer(
     transfer_transaction = update_transaction_splits(transfer_transaction, [])
 
     transaction.transfer_transaction = transfer_transaction
+
+    return transaction
+
+
+def convert_transfer_to_transaction(
+    session: Session, transaction: Transaction
+) -> Transaction:
+
+    if transaction.transfer_transaction is None:
+        raise ValueError("Transaction is already not a transfer.")
+
+    # Get incoming side of transfer
+    transfer_transaction = transaction.transfer_transaction
+
+    # Unlink outgoing transfer
+    transaction.transfer_transaction = None
+
+    # Make split for transaction and set amount to transaction amount
+    split = create_default_transaction_split(session, transaction)
+    split = update_transaction_split_amount(split, transaction.amount)
+
+    # Delete incoming side of transfer
+    delete_transaction(transfer_transaction)
 
     return transaction
 
