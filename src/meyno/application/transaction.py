@@ -97,7 +97,7 @@ def update_transaction_splits(
 
     transaction.splits = new_splits
 
-    return Transaction
+    return transaction
 
 
 def convert_transaction_to_transfer(
