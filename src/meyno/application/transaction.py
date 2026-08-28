@@ -150,6 +150,9 @@ def convert_transfer_to_transaction(
 
 
 def delete_transaction(session: Session, transaction: Transaction) -> None:
+    # TODO(ChaoticDefense): May make this function dumber to have controller do
+    # most of the determining/finding of other side of transfer
+
     # Deletion logic: deleting explicitly a transaction that is part of a transfer
     # will also delete the other part of the transfer.
     # Deleting a whole account will instead break the chain and delete all transactions
