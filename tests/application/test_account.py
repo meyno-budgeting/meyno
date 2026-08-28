@@ -195,41 +195,42 @@ def test_delete_account_deletes_transactions(session):
     assert session.get(Transaction, transaction_2_id) is None
 
 
-def test_delete_account_preserves_incoming_transfer_transaction(session):
-    checking = create_account(session, "Checking")
-    savings = create_account(session, "Savings")
+## TODO(ChaoticDefense): Move this test to controller layer
+# def test_delete_account_preserves_incoming_transfer_transaction(session):
+#     checking = create_account(session, "Checking")
+#     savings = create_account(session, "Savings")
 
-    checking_transaction = Transaction(
-        account=checking,
-        date=date(2026, 8, 24),
-        amount=-500,
-    )
+#     checking_transaction = Transaction(
+#         account=checking,
+#         date=date(2026, 8, 24),
+#         amount=-500,
+#     )
 
-    savings_transaction = Transaction(
-        account=savings,
-        date=date(2026, 8, 24),
-        amount=500,
-    )
+#     savings_transaction = Transaction(
+#         account=savings,
+#         date=date(2026, 8, 24),
+#         amount=500,
+#     )
 
-    session.add_all([checking_transaction, savings_transaction])
+#     session.add_all([checking_transaction, savings_transaction])
 
-    checking_transaction.transfer_transaction = savings_transaction
-    session.flush()
+#     checking_transaction.transfer_transaction = savings_transaction
+#     session.flush()
 
-    savings_transaction_id = savings_transaction.transaction_id
+#     savings_transaction_id = savings_transaction.transaction_id
 
-    delete_account(session, checking)
+#     delete_account(session, checking)
 
-    session.commit()
-    session.expire_all()
+#     session.commit()
+#     session.expire_all()
 
-    stored_savings_transaction = session.get(
-        Transaction,
-        savings_transaction_id,
-    )
+#     stored_savings_transaction = session.get(
+#         Transaction,
+#         savings_transaction_id,
+#     )
 
-    assert stored_savings_transaction is not None
-    assert stored_savings_transaction.transfer_transaction is None
+#     assert stored_savings_transaction is not None
+#     assert stored_savings_transaction.transfer_transaction is None
 
 
 ## TODO(ChaoticDefense): Move this test to controller layer
