@@ -2,7 +2,7 @@ import datetime
 
 from sqlalchemy.orm import Session
 
-from meyno.application.account import create_account
+from meyno.application.account import add_account_to_database
 from meyno.application.category import create_category
 from meyno.application.payee import create_payee
 from meyno.application.transaction import (
@@ -27,7 +27,7 @@ from meyno.database.models import TransactionSplit
 def test_create_default_transaction(session: Session):
     expected_date = datetime.datetime.now().astimezone().date()
 
-    account = create_account(session, "Checking")
+    account = add_account_to_database(session, "Checking")
     transaction = create_default_transaction(session, account)
 
     session.commit()
@@ -51,7 +51,7 @@ def test_create_default_transaction(session: Session):
 
 
 def test_get_transaction_by_id(session: Session):
-    account = create_account(session, "Checking")
+    account = add_account_to_database(session, "Checking")
     transaction = create_default_transaction(session, account)
 
     session.commit()
@@ -73,7 +73,7 @@ def test_get_transaction_by_id_not_found(session):
 
 
 def test_update_transaction_date(session: Session):
-    account = create_account(session, "Checking")
+    account = add_account_to_database(session, "Checking")
     transaction = create_default_transaction(session, account)
 
     session.flush()
@@ -95,8 +95,8 @@ def test_update_transaction_date(session: Session):
 
 
 def test_update_transaction_account(session: Session):
-    checking_account = create_account(session, "Checking")
-    savings_account = create_account(session, "Savings")
+    checking_account = add_account_to_database(session, "Checking")
+    savings_account = add_account_to_database(session, "Savings")
 
     transaction = create_default_transaction(session, checking_account)
 
@@ -117,7 +117,7 @@ def test_update_transaction_account(session: Session):
 
 
 def test_update_transaction_payee(session: Session):
-    checking_account = create_account(session, "Checking")
+    checking_account = add_account_to_database(session, "Checking")
     new_payee = create_payee(session, "Walmart")
 
     transaction = create_default_transaction(session, checking_account)
@@ -139,7 +139,7 @@ def test_update_transaction_payee(session: Session):
 
 
 def test_update_transaction_amount(session: Session):
-    checking_account = create_account(session, "Checking")
+    checking_account = add_account_to_database(session, "Checking")
     new_amount = 1000
 
     transaction = create_default_transaction(session, checking_account)
@@ -161,7 +161,7 @@ def test_update_transaction_amount(session: Session):
 
 
 def test_update_transaction_notes(session: Session):
-    checking_account = create_account(session, "Checking")
+    checking_account = add_account_to_database(session, "Checking")
     new_notes = "This is a note"
 
     transaction = create_default_transaction(session, checking_account)
@@ -183,7 +183,7 @@ def test_update_transaction_notes(session: Session):
 
 
 def test_update_transaction_splits(session):
-    account = create_account(session, "Checking")
+    account = add_account_to_database(session, "Checking")
     transaction = create_default_transaction(session, account)
 
     update_transaction_splits(transaction, [])
@@ -201,7 +201,7 @@ def test_update_transaction_splits(session):
 
 
 def test_update_transaction_splits_none(session):
-    account = create_account(session, "Checking")
+    account = add_account_to_database(session, "Checking")
     transaction = create_default_transaction(session, account)
 
     update_transaction_splits(transaction, None)
@@ -250,7 +250,7 @@ def test_update_transaction_splits_none(session):
 
 
 def test_delete_transaction(session: Session):
-    account = create_account(session, "Checking")
+    account = add_account_to_database(session, "Checking")
     date = datetime.date(2026, 8, 24)
     amount = -500
 
@@ -305,7 +305,7 @@ def test_delete_transaction(session: Session):
 
 
 def test_create_default_transaction_split(session: Session):
-    account = create_account(session, "Checking")
+    account = add_account_to_database(session, "Checking")
     transaction = create_default_transaction(session, account)
     update_transaction_amount(transaction, 1000)
 
@@ -325,7 +325,7 @@ def test_create_default_transaction_split(session: Session):
 
 
 def test_get_transaction_split_by_id(session: Session):
-    account = create_account(session, "Checking")
+    account = add_account_to_database(session, "Checking")
     transaction = create_default_transaction(session, account)
 
     session.commit()
@@ -348,7 +348,7 @@ def test_get_transaction_split_by_id_not_found(session: Session):
 
 
 def test_update_transaction_split_category(session: Session):
-    account = create_account(session, "Checking")
+    account = add_account_to_database(session, "Checking")
     transaction = create_default_transaction(session, account)
     new_category = create_category(session, "Groceries")
 
@@ -372,7 +372,7 @@ def test_update_transaction_split_category(session: Session):
 
 
 def test_update_transaction_split_amount(session: Session):
-    account = create_account(session, "Checking")
+    account = add_account_to_database(session, "Checking")
     transaction = create_default_transaction(session, account)
     new_amount = 8000
 
@@ -398,7 +398,7 @@ def test_update_transaction_split_amount(session: Session):
 
 
 def test_delete_transaction_split(session: Session):
-    account = create_account(session, "Checking")
+    account = add_account_to_database(session, "Checking")
     transaction = create_default_transaction(session, account)
     new_split = create_default_transaction_split(session, transaction)
 
