@@ -11,6 +11,22 @@ from meyno.database.models import (
     TransactionSplit,
 )
 
+# TODO(ChaoticDefense): In either here or GUI layer, have logic for before/after updating
+# a transaction split amount
+# if len(transaction.splits) == 1:
+#     # "Normal" non-transfer transaction
+#     # Update the only split amount as well
+#     transaction.splits[0].amount = new_amount
+# elif len(transaction.splits) > 1:
+#     # "Split" non-transfer transaction
+#     # Logic for adding a split with appropiate positive or negative
+#     # amount to make sum of splits equal to transaction amount
+#     pass
+# else:
+#     # Transfer transaction
+#     # Logic for modifying other side of transfer's amount
+#     pass
+
 
 def get_transaction_by_id(session: Session, transaction_id: int) -> Transaction | None:
     return session.get(Transaction, transaction_id)
@@ -64,20 +80,6 @@ def update_transaction_payee(
 def update_transaction_amount(transaction: Transaction, new_amount: int) -> Transaction:
 
     transaction.amount = new_amount
-
-    if len(transaction.splits) == 1:
-        # "Normal" non-transfer transaction
-        # Update the only split amount as well
-        transaction.splits[0].amount = new_amount
-    elif len(transaction.splits) > 1:
-        # "Split" non-transfer transaction
-        # TODO: Logic for adding a split with appropiate positive or negative
-        # amount to make sum of splits equal to transaction amount
-        pass
-    else:
-        # Transfer transaction
-        # TODO: Logic for modifying other side of transfer's amount
-        pass
 
     return transaction
 
