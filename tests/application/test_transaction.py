@@ -274,7 +274,7 @@ def test_get_transaction_split_by_id(session: Session):
 
 
 def test_get_transaction_split_by_id_not_found(session: Session):
-    assert get_transaction_by_id(session, 9999) is None
+    assert get_transaction_split_by_id(session, 9999) is None
 
 
 def test_update_transaction_split_category(session: Session):

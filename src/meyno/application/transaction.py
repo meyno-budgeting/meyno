@@ -85,7 +85,40 @@ def update_transaction_amount(transaction: Transaction, new_amount: int) -> Tran
 def update_transaction_notes(transaction: Transaction, new_notes: str) -> Transaction:
     transaction.notes = new_notes
 
-    return new_notes
+    return transaction
+
+
+def update_transaction_splits(
+    transaction: Transaction, new_splits: list[TransactionSplit] | None
+) -> Transaction:
+
+    if new_splits is None:
+        new_splits = []
+
+    transaction.splits = new_splits
+
+    return Transaction
+
+
+def convert_transaction_to_transfer(
+    session: Session, transaction: Transaction, transfer_account: Account
+) -> Transaction:
+
+    # Create a transaction in other account
+    transfer_transaction = create_default_transaction(session, transfer_account)
+
+    # Set amount of transfer side to equal and opposite
+    transfer_transaction = update_transaction_amount(
+        transfer_transaction, -1 * transaction.amount
+    )
+
+    # Set splits to empty for both sides
+    transaction = update_transaction_splits(transaction, [])
+    transfer_transaction = update_transaction_splits(transfer_transaction, [])
+
+    transaction.transfer_transaction = transfer_transaction
+
+    return transaction
 
 
 def delete_transaction(session: Session, transaction: Transaction) -> None:
