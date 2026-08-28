@@ -394,6 +394,8 @@ def test_update_transaction_split_amount(session: Session):
     assert len(stored_transaction.splits) == 1
     assert stored_transaction.splits[0].amount == 8000
 
+    assert stored_transaction.amount == 0
+
 
 def test_delete_transaction_split(session: Session):
     account = create_account(session, "Checking")
