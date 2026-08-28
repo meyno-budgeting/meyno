@@ -19,6 +19,7 @@ from meyno.application.transaction import (
     update_transaction_payee,
     update_transaction_split_amount,
     update_transaction_split_category,
+    update_transaction_splits,
 )
 from meyno.database.models import TransactionSplit
 
@@ -181,6 +182,42 @@ def test_update_transaction_notes(session: Session):
     assert stored_transaction.notes == new_notes
 
 
+def test_update_transaction_splits(session):
+    account = create_account(session, "Checking")
+    transaction = create_default_transaction(session, account)
+
+    update_transaction_splits(transaction, [])
+
+    session.commit()
+    session.expire_all()
+
+    stored_transaction = get_transaction_by_id(
+        session,
+        transaction.transaction_id,
+    )
+
+    assert stored_transaction is not None
+    assert len(stored_transaction.splits) == 0
+
+
+def test_update_transaction_splits_none(session):
+    account = create_account(session, "Checking")
+    transaction = create_default_transaction(session, account)
+
+    update_transaction_splits(transaction, None)
+
+    session.commit()
+    session.expire_all()
+
+    stored_transaction = get_transaction_by_id(
+        session,
+        transaction.transaction_id,
+    )
+
+    assert stored_transaction is not None
+    assert len(stored_transaction.splits) == 0
+
+
 # TODO(ChaoticDefense): Move this test to controller layer and make test for
 # converting from transfer to transaction
 # def test_convert_transaction_to_transfer(session):
@@ -270,6 +307,7 @@ def test_delete_transaction(session: Session):
 def test_create_default_transaction_split(session: Session):
     account = create_account(session, "Checking")
     transaction = create_default_transaction(session, account)
+    update_transaction_amount(transaction, 1000)
 
     new_split = create_default_transaction_split(session, transaction)
 
@@ -282,7 +320,7 @@ def test_create_default_transaction_split(session: Session):
     assert stored_transaction.splits[1] is new_split
     assert stored_transaction.splits[1].transaction is stored_transaction
     assert stored_transaction.splits[1].category is None
-    assert stored_transaction.splits[1].amount == stored_transaction.amount
+    assert stored_transaction.splits[1].amount == 0
     assert stored_transaction.splits[1].transaction_split_id is not None
 
 
