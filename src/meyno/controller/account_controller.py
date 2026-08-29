@@ -8,26 +8,20 @@ from meyno.application.account import (
     update_account_name_in_database,
 )
 from meyno.database.models import Account, Transaction
-
-# TODO(ChaoticDefense): Wishlist: Add custom Errors related to Account
-# AccountNotFoundError - For not finding the requested account
-# AccountExistsError - For when an Account already exists with that name
-# AccountNameEmptyError - For when Account name is empty
+from meyno.exceptions import AccountAlreadyExistsError, AccountNameEmptyError
 
 
 def _check_account_exists(session: Session, account_name: str) -> None:
     # Check if account already exists
-    existing_account = get_account_by_name(session, account_name)
-    if existing_account is not None:
-        msg = f"Account already exists: {account_name}"
-        raise ValueError(msg)
+    if get_account_by_name(session, account_name) is not None:
+        raise AccountAlreadyExistsError(account_name)
 
 
 def _validate_account_name(name: str) -> str:
     name = name.strip()
 
     if not name:
-        raise ValueError("Account name cannot be empty.")
+        raise AccountNameEmptyError
 
     return name
 
