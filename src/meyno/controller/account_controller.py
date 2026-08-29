@@ -14,9 +14,6 @@ from meyno.database.models import Account, Transaction
 # AccountExistsError - For when an Account already exists with that name
 # AccountNameEmptyError - For when Account name is empty
 
-## Deleting account logic
-# TODO(ChaoticDefense): Move to contoller layer
-
 
 def check_account_exists(session: Session, account_name: str) -> None:
     # Check if account already exists
