@@ -6,6 +6,7 @@ from meyno.application.account import (
     delete_account_from_database,
     get_account_by_id_from_database,
     get_account_by_name_from_database,
+    get_all_accounts_from_database,
     update_account_name_in_database,
 )
 from meyno.database.models import Account, Transaction
@@ -58,6 +59,10 @@ def get_account_by_name(session: Session, account_name: str) -> Account:
         raise AccountNotFoundError(account_name)
 
     return account
+
+
+def get_all_accounts(session: Session) -> list[Account]:
+    return get_all_accounts_from_database(session)
 
 
 def update_account_name(session: Session, account: Account, new_name: str) -> Account:

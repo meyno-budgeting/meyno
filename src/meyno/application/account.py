@@ -16,6 +16,10 @@ def get_account_by_name_from_database(session: Session, name: str) -> Account | 
     return session.scalars(statement).first()
 
 
+def get_all_accounts_from_database(session: Session) -> list[Account]:
+    return list(session.scalars(select(Account)))
+
+
 def add_account_to_database(session: Session, name: str) -> Account:
     account = Account(name=name)
     session.add(account)
