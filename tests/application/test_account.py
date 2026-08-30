@@ -3,8 +3,8 @@ from datetime import date
 from meyno.application.account import (
     add_account_to_database,
     delete_account_from_database,
-    get_account_by_id,
-    get_account_by_name,
+    get_account_by_id_from_database,
+    get_account_by_name_from_database,
     update_account_name_in_database,
 )
 from meyno.database.models import Account, Transaction
@@ -16,7 +16,7 @@ def test_create_account(session):
     session.commit()
     session.expire_all()
 
-    stored_account = get_account_by_id(session, account.account_id)
+    stored_account = get_account_by_id_from_database(session, account.account_id)
 
     assert stored_account is not None
     assert stored_account.name == "Checking"
@@ -55,7 +55,7 @@ def test_get_account_by_id(session):
 
     session.flush()
 
-    result = get_account_by_id(session, account.account_id)
+    result = get_account_by_id_from_database(session, account.account_id)
 
     assert result is not None
     assert result.account_id == account.account_id
@@ -65,7 +65,7 @@ def test_get_account_by_id(session):
 def test_get_account_by_name(session):
     account = add_account_to_database(session, "Checking")
 
-    result = get_account_by_name(session, "Checking")
+    result = get_account_by_name_from_database(session, "Checking")
 
     assert result is not None
     assert result.account_id == account.account_id
@@ -73,13 +73,13 @@ def test_get_account_by_name(session):
 
 
 def test_get_account_by_id_not_found(session):
-    result = get_account_by_id(session, 999)
+    result = get_account_by_id_from_database(session, 999)
 
     assert result is None
 
 
 def test_get_account_by_name_not_found(session):
-    result = get_account_by_name(session, "Does Not Exist")
+    result = get_account_by_name_from_database(session, "Does Not Exist")
 
     assert result is None
 
@@ -97,7 +97,7 @@ def test_update_account_name(session):
     session.commit()
     session.expire_all()
 
-    stored_account = get_account_by_id(session, account.account_id)
+    stored_account = get_account_by_id_from_database(session, account.account_id)
 
     assert stored_account is not None
     assert stored_account.name == "Savings"
@@ -160,7 +160,7 @@ def test_delete_account(session):
     session.commit()
     session.expire_all()
 
-    assert get_account_by_id(session, account.account_id) is None
+    assert get_account_by_id_from_database(session, account.account_id) is None
 
 
 def test_delete_account_deletes_transactions(session):

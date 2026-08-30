@@ -4,11 +4,13 @@ from sqlalchemy.orm import Session
 from meyno.database.models import Account
 
 
-def get_account_by_id(session: Session, account_id: int) -> Account | None:
+def get_account_by_id_from_database(
+    session: Session, account_id: int
+) -> Account | None:
     return session.get(Account, account_id)
 
 
-def get_account_by_name(session: Session, name: str) -> Account | None:
+def get_account_by_name_from_database(session: Session, name: str) -> Account | None:
     statement = select(Account).where(Account.name == name)
 
     return session.scalars(statement).first()

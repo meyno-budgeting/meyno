@@ -20,6 +20,6 @@ class AccountNameEmptyError(AccountError):
 class AccountNotFoundError(AccountError):
     """Raised when an account cannot be found."""
 
-    def __init__(self, account_id: int) -> None:
-        self.account_id = account_id
-        super().__init__(f"Account not found: {account_id}")
+    def __init__(self, search_value: str | int) -> None:
+        self.search_value = search_value
+        super().__init__(f"Account not found: {search_value}")

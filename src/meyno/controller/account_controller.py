@@ -4,16 +4,21 @@ from sqlalchemy.orm import Session
 from meyno.application.account import (
     add_account_to_database,
     delete_account_from_database,
-    get_account_by_name,
+    get_account_by_id_from_database,
+    get_account_by_name_from_database,
     update_account_name_in_database,
 )
 from meyno.database.models import Account, Transaction
-from meyno.exceptions import AccountAlreadyExistsError, AccountNameEmptyError
+from meyno.exceptions import (
+    AccountAlreadyExistsError,
+    AccountNameEmptyError,
+    AccountNotFoundError,
+)
 
 
 def _check_account_exists(session: Session, account_name: str) -> None:
     # Check if account already exists
-    if get_account_by_name(session, account_name) is not None:
+    if get_account_by_name_from_database(session, account_name) is not None:
         raise AccountAlreadyExistsError(account_name)
 
 
@@ -35,6 +40,24 @@ def add_account(session: Session, name: str) -> Account:
         account = add_account_to_database(session, name)
 
         return account
+
+
+def get_account_by_id(session: Session, account_id: int) -> Account:
+    account = get_account_by_id_from_database(session, account_id)
+
+    if account is None:
+        raise AccountNotFoundError(account_id)
+
+    return account
+
+
+def get_account_by_name(session: Session, account_name: str) -> Account:
+    account = get_account_by_name_from_database(session, account_name)
+
+    if account is None:
+        raise AccountNotFoundError(account_name)
+
+    return account
 
 
 def update_account_name(session: Session, account: Account, new_name: str) -> Account:
