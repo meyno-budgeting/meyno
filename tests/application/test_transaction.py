@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy.orm import Session
 
 from meyno.application.account import add_account_to_database
-from meyno.application.category import create_category
+from meyno.application.category import add_category_to_database
 from meyno.application.payee import create_payee
 from meyno.application.transaction import (
     create_default_transaction,
@@ -350,7 +350,7 @@ def test_get_transaction_split_by_id_not_found(session: Session):
 def test_update_transaction_split_category(session: Session):
     account = add_account_to_database(session, "Checking")
     transaction = create_default_transaction(session, account)
-    new_category = create_category(session, "Groceries")
+    new_category = add_category_to_database(session, "Groceries")
 
     session.flush()
 

@@ -9,28 +9,23 @@ from meyno.database.models import Category
 # CategoryNameEmptyError - For when Category name is empty
 
 
-def get_category_by_id(session: Session, category_id: int) -> Category | None:
+def get_category_by_id_from_database(
+    session: Session, category_id: int
+) -> Category | None:
     return session.get(Category, category_id)
 
 
-def get_category_by_name(session: Session, name: str) -> Category | None:
+def get_category_by_name_from_database(session: Session, name: str) -> Category | None:
     statement = select(Category).where(Category.name == name)
 
     return session.scalars(statement).first()
 
 
-def create_category(session: Session, name: str) -> Category:
-    name = name.strip()
+def get_all_categories_from_database(session: Session) -> list[Category]:
+    return list(session.scalars(select(Category)))
 
-    if not name:
-        raise ValueError("Category name cannot be empty.")
 
-    # Check if category already exists
-    existing_category = get_category_by_name(session, name)
-    if existing_category is not None:
-        msg = f"Category already exists: {name}"
-        raise ValueError(msg)
-
+def add_category_to_database(session: Session, name: str) -> Category:
     category = Category(name=name)
 
     session.add(category)
@@ -38,28 +33,11 @@ def create_category(session: Session, name: str) -> Category:
     return category
 
 
-def update_category_name(
-    session: Session, category: Category, new_name: str
-) -> Category:
-
-    new_name = new_name.strip()
-
-    if not new_name:
-        raise ValueError("Category name cannot be empty.")
-
-    if new_name == category.name:
-        return category
-
-    existing_category = get_category_by_name(session, new_name)
-
-    if existing_category is not None:
-        msg = f"Category already exists: {new_name}"
-        raise ValueError(msg)
-
+def update_category_name_in_database(category: Category, new_name: str) -> Category:
     category.name = new_name
 
     return category
 
 
-def delete_category(session: Session, category: Category) -> None:
+def delete_category_from_database(session: Session, category: Category) -> None:
     session.delete(category)
