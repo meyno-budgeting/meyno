@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from meyno.application.account import add_account_to_database
 from meyno.application.category import add_category_to_database
-from meyno.application.payee import create_payee
+from meyno.application.payee import add_payee_to_database
 from meyno.application.transaction import (
     create_default_transaction,
     create_default_transaction_split,
@@ -118,7 +118,7 @@ def test_update_transaction_account(session: Session):
 
 def test_update_transaction_payee(session: Session):
     checking_account = add_account_to_database(session, "Checking")
-    new_payee = create_payee(session, "Walmart")
+    new_payee = add_payee_to_database(session, "Walmart")
 
     transaction = create_default_transaction(session, checking_account)
 

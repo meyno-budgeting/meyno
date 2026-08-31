@@ -3,11 +3,6 @@ from sqlalchemy.orm import Session
 
 from meyno.database.models import Category
 
-# TODO(ChaoticDefense): Wishlist: Add custom Errors related to Category
-# CategoryNotFoundError - For not finding the requested category
-# CategoryExistsError - For when an Category already exists with that name
-# CategoryNameEmptyError - For when Category name is empty
-
 
 def get_category_by_id_from_database(
     session: Session, category_id: int
