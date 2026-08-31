@@ -53,6 +53,8 @@ def get_account_by_id(session: Session, account_id: int) -> Account:
 
 
 def get_account_by_name(session: Session, account_name: str) -> Account:
+    account_name = _validate_account_name(account_name)
+
     account = get_account_by_name_from_database(session, account_name)
 
     if account is None:
