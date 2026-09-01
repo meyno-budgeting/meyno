@@ -8,18 +8,18 @@ from meyno.application.payee import add_payee_to_database
 from meyno.application.transaction import (
     create_default_transaction,
     create_default_transaction_split,
-    delete_transaction,
-    delete_transaction_split,
-    get_transaction_by_id,
-    get_transaction_split_by_id,
-    update_transaction_account,
-    update_transaction_amount,
-    update_transaction_date,
-    update_transaction_notes,
-    update_transaction_payee,
-    update_transaction_split_amount,
-    update_transaction_split_category,
-    update_transaction_splits,
+    delete_split_from_transaction,
+    delete_transaction_from_database,
+    get_split_by_id_from_database,
+    get_transaction_by_id_from_database,
+    update_split_amount_in_database,
+    update_split_category,
+    update_transaction_account_in_database,
+    update_transaction_amount_in_database,
+    update_transaction_date_in_database,
+    update_transaction_notes_in_database,
+    update_transaction_payee_in_database,
+    update_transaction_splits_in_database,
 )
 from meyno.database.models import TransactionSplit
 
@@ -33,7 +33,9 @@ def test_create_default_transaction(session: Session):
     session.commit()
     session.expire_all()
 
-    stored_transaction = get_transaction_by_id(session, transaction.transaction_id)
+    stored_transaction = get_transaction_by_id_from_database(
+        session, transaction.transaction_id
+    )
 
     assert stored_transaction is not None
     assert stored_transaction.account is account
@@ -57,7 +59,7 @@ def test_get_transaction_by_id(session: Session):
     session.commit()
     session.expire_all()
 
-    stored_transaction = get_transaction_by_id(
+    stored_transaction = get_transaction_by_id_from_database(
         session,
         transaction.transaction_id,
     )
@@ -67,7 +69,7 @@ def test_get_transaction_by_id(session: Session):
 
 
 def test_get_transaction_by_id_not_found(session):
-    result = get_transaction_by_id(session, 999)
+    result = get_transaction_by_id_from_database(session, 999)
 
     assert result is None
 
@@ -80,12 +82,12 @@ def test_update_transaction_date(session: Session):
 
     new_date = datetime.date(2026, 8, 25)
 
-    update_transaction_date(transaction, new_date)
+    update_transaction_date_in_database(transaction, new_date)
 
     session.commit()
     session.expire_all()
 
-    stored_transaction = get_transaction_by_id(
+    stored_transaction = get_transaction_by_id_from_database(
         session,
         transaction.transaction_id,
     )
@@ -102,12 +104,12 @@ def test_update_transaction_account(session: Session):
 
     session.flush()
 
-    update_transaction_account(transaction, savings_account)
+    update_transaction_account_in_database(transaction, savings_account)
 
     session.commit()
     session.expire_all()
 
-    stored_transaction = get_transaction_by_id(
+    stored_transaction = get_transaction_by_id_from_database(
         session,
         transaction.transaction_id,
     )
@@ -124,12 +126,12 @@ def test_update_transaction_payee(session: Session):
 
     session.flush()
 
-    update_transaction_payee(transaction, new_payee)
+    update_transaction_payee_in_database(transaction, new_payee)
 
     session.commit()
     session.expire_all()
 
-    stored_transaction = get_transaction_by_id(
+    stored_transaction = get_transaction_by_id_from_database(
         session,
         transaction.transaction_id,
     )
@@ -146,12 +148,12 @@ def test_update_transaction_amount(session: Session):
 
     session.flush()
 
-    update_transaction_amount(transaction, new_amount)
+    update_transaction_amount_in_database(transaction, new_amount)
 
     session.commit()
     session.expire_all()
 
-    stored_transaction = get_transaction_by_id(
+    stored_transaction = get_transaction_by_id_from_database(
         session,
         transaction.transaction_id,
     )
@@ -168,12 +170,12 @@ def test_update_transaction_notes(session: Session):
 
     session.flush()
 
-    update_transaction_notes(transaction, new_notes)
+    update_transaction_notes_in_database(transaction, new_notes)
 
     session.commit()
     session.expire_all()
 
-    stored_transaction = get_transaction_by_id(
+    stored_transaction = get_transaction_by_id_from_database(
         session,
         transaction.transaction_id,
     )
@@ -186,12 +188,12 @@ def test_update_transaction_splits(session):
     account = add_account_to_database(session, "Checking")
     transaction = create_default_transaction(session, account)
 
-    update_transaction_splits(transaction, [])
+    update_transaction_splits_in_database(transaction, [])
 
     session.commit()
     session.expire_all()
 
-    stored_transaction = get_transaction_by_id(
+    stored_transaction = get_transaction_by_id_from_database(
         session,
         transaction.transaction_id,
     )
@@ -204,12 +206,12 @@ def test_update_transaction_splits_none(session):
     account = add_account_to_database(session, "Checking")
     transaction = create_default_transaction(session, account)
 
-    update_transaction_splits(transaction, None)
+    update_transaction_splits_in_database(transaction, None)
 
     session.commit()
     session.expire_all()
 
-    stored_transaction = get_transaction_by_id(
+    stored_transaction = get_transaction_by_id_from_database(
         session,
         transaction.transaction_id,
     )
@@ -255,19 +257,19 @@ def test_delete_transaction(session: Session):
     amount = -500
 
     transaction = create_default_transaction(session, account)
-    transaction = update_transaction_date(transaction, date)
-    transaction = update_transaction_amount(transaction, amount)
+    transaction = update_transaction_date_in_database(transaction, date)
+    transaction = update_transaction_amount_in_database(transaction, amount)
 
     session.flush()
 
     transaction_id = transaction.transaction_id
 
-    delete_transaction(session, transaction)
+    delete_transaction_from_database(session, transaction)
 
     session.commit()
     session.expire_all()
 
-    assert get_transaction_by_id(session, transaction_id) is None
+    assert get_transaction_by_id_from_database(session, transaction_id) is None
 
 
 # TODO(ChaoticDefense): Move this test to controller layer
@@ -307,14 +309,16 @@ def test_delete_transaction(session: Session):
 def test_create_default_transaction_split(session: Session):
     account = add_account_to_database(session, "Checking")
     transaction = create_default_transaction(session, account)
-    update_transaction_amount(transaction, 1000)
+    update_transaction_amount_in_database(transaction, 1000)
 
     new_split = create_default_transaction_split(session, transaction)
 
     session.commit()
     session.expire_all()
 
-    stored_transaction = get_transaction_by_id(session, transaction.transaction_id)
+    stored_transaction = get_transaction_by_id_from_database(
+        session, transaction.transaction_id
+    )
 
     assert len(stored_transaction.splits) == 2
     assert stored_transaction.splits[1] is new_split
@@ -333,7 +337,7 @@ def test_get_transaction_split_by_id(session: Session):
 
     split_id = transaction.splits[0].transaction_split_id
 
-    stored_transaction_split = get_transaction_split_by_id(
+    stored_transaction_split = get_split_by_id_from_database(
         session,
         split_id,
     )
@@ -344,7 +348,7 @@ def test_get_transaction_split_by_id(session: Session):
 
 
 def test_get_transaction_split_by_id_not_found(session: Session):
-    assert get_transaction_split_by_id(session, 9999) is None
+    assert get_split_by_id_from_database(session, 9999) is None
 
 
 def test_update_transaction_split_category(session: Session):
@@ -356,12 +360,12 @@ def test_update_transaction_split_category(session: Session):
 
     split = transaction.splits[0]
 
-    update_transaction_split_category(split, new_category)
+    update_split_category(split, new_category)
 
     session.commit()
     session.expire_all()
 
-    stored_transaction = get_transaction_by_id(
+    stored_transaction = get_transaction_by_id_from_database(
         session,
         transaction.transaction_id,
     )
@@ -380,12 +384,12 @@ def test_update_transaction_split_amount(session: Session):
 
     split = transaction.splits[0]
 
-    update_transaction_split_amount(split, new_amount)
+    update_split_amount_in_database(split, new_amount)
 
     session.commit()
     session.expire_all()
 
-    stored_transaction = get_transaction_by_id(
+    stored_transaction = get_transaction_by_id_from_database(
         session,
         transaction.transaction_id,
     )
@@ -407,12 +411,14 @@ def test_delete_transaction_split(session: Session):
     default_split_id = transaction.splits[0].transaction_split_id
     new_split_id = new_split.transaction_split_id
 
-    delete_transaction_split(session, new_split)
+    delete_split_from_transaction(session, new_split)
 
     session.commit()
     session.expire_all()
 
-    stored_transaction = get_transaction_by_id(session, transaction.transaction_id)
+    stored_transaction = get_transaction_by_id_from_database(
+        session, transaction.transaction_id
+    )
     queried_split = session.get(TransactionSplit, new_split_id)
     remaining_split = session.get(TransactionSplit, default_split_id)
 
