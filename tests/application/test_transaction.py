@@ -8,7 +8,7 @@ from meyno.application.payee import add_payee_to_database
 from meyno.application.transaction import (
     create_default_transaction,
     create_default_transaction_split,
-    delete_split_from_transaction,
+    delete_split_from_transaction_in_database,
     delete_transaction_from_database,
     get_split_by_id_from_database,
     get_transaction_by_id_from_database,
@@ -411,7 +411,7 @@ def test_delete_transaction_split(session: Session):
     default_split_id = transaction.splits[0].transaction_split_id
     new_split_id = new_split.transaction_split_id
 
-    delete_split_from_transaction(session, new_split)
+    delete_split_from_transaction_in_database(session, new_split)
 
     session.commit()
     session.expire_all()

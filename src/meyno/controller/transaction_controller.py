@@ -4,9 +4,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from meyno.application.transaction import (
-    add_split_to_transaction,
+    add_split_to_transaction_in_database,
     add_transaction_to_database,
     delete_transaction_from_database,
+    get_all_transactions_from_database,
     update_split_amount_in_database,
     update_transaction_amount_in_database,
     update_transaction_date_in_database,
@@ -14,7 +15,13 @@ from meyno.application.transaction import (
     update_transaction_payee_in_database,
     update_transaction_splits_in_database,
 )
-from meyno.database.models import Account, Payee, Transaction, TransactionSplit
+from meyno.database.models import (
+    Account,
+    Category,
+    Payee,
+    Transaction,
+    TransactionSplit,
+)
 
 
 def create_default_transaction(session: Session, account: Account) -> Transaction:
@@ -29,9 +36,15 @@ def create_default_transaction(session: Session, account: Account) -> Transactio
             amount=default_amount,
         )
 
-        add_split_to_transaction(session, transaction, default_amount, category=None)
+        add_split_to_transaction_in_database(
+            session, transaction, default_amount, category=None
+        )
 
         return transaction
+
+
+def get_all_transactions(session: Session) -> list[Transaction]:
+    return get_all_transactions_from_database(session)
 
 
 def update_transaction_date(
@@ -65,7 +78,9 @@ def update_transaction_amount(
             diff = new_amount - split_total
 
             if diff != 0:
-                add_split_to_transaction(session, transaction, diff, category=None)
+                add_split_to_transaction_in_database(
+                    session, transaction, diff, category=None
+                )
         elif len(transaction.splits) == 0:
             # Transfer
             # Update other side of transaction
@@ -171,7 +186,7 @@ def convert_transfer_to_transaction(
         transaction.transfer_transaction = None
 
         # Make single split for transaction and set amount to transaction amount
-        add_split_to_transaction(
+        add_split_to_transaction_in_database(
             session, transaction=transaction, amount=transaction.amount, category=None
         )
 
@@ -179,6 +194,19 @@ def convert_transfer_to_transaction(
         delete_transaction_from_database(transfer_transaction)
 
         return transaction
+
+
+def add_split_to_transaction(
+    session: Session,
+    transaction: Transaction,
+    amount: int = 0,
+    category: Category | None = None,
+) -> TransactionSplit:
+
+    with session.begin():
+        return add_split_to_transaction_in_database(
+            session, transaction, amount, category
+        )
 
 
 def _get_split_amount_total(transaction: Transaction) -> int:

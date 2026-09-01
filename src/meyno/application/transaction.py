@@ -1,5 +1,6 @@
 import datetime
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from meyno.database.models import (
@@ -15,6 +16,30 @@ def get_transaction_by_id_from_database(
     session: Session, transaction_id: int
 ) -> Transaction | None:
     return session.get(Transaction, transaction_id)
+
+
+def get_all_transactions_from_database(session: Session) -> list[Transaction]:
+    return session.scalars(select(Transaction))
+
+
+def get_all_transactions_for_account_from_database(
+    account: Account,
+) -> list[Transaction]:
+
+    return list(account.transactions)
+
+
+def get_transactions_by_payee_from_database(
+    session: Session,
+    payee: Payee | None,
+) -> list[Transaction]:
+
+    if payee is None:
+        statement = select(Transaction).where(Transaction.payee_id.is_(None))
+
+        return list(session.scalars(statement))
+
+    return list(payee.transactions)
 
 
 def add_transaction_to_database(
@@ -102,10 +127,10 @@ def delete_transaction_from_database(
     session.delete(transaction)
 
 
-def add_split_to_transaction(
+def add_split_to_transaction_in_database(
     session: Session,
     transaction: Transaction,
-    amount: int,
+    amount: int = 0,
     category: Category | None = None,
 ) -> TransactionSplit:
 
@@ -138,5 +163,7 @@ def update_split_amount_in_database(
     return split
 
 
-def delete_split_from_transaction(session: Session, split: TransactionSplit) -> None:
+def delete_split_from_transaction_in_database(
+    session: Session, split: TransactionSplit
+) -> None:
     session.delete(split)
