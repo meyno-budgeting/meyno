@@ -11,6 +11,11 @@ from meyno.application.transaction import (
     update_transaction_splits_in_database,
 )
 from meyno.database.models import Account, Category, Transaction, TransactionSplit
+from meyno.exceptions.transactions import (
+    TransactionConversionError,
+    TransactionNotFoundError,
+    TransferConversionError,
+)
 from meyno.schemas.transaction import (
     TransactionCreate,
     TransactionSplitCreate,
@@ -88,7 +93,7 @@ def convert_transaction_to_transfer(
 
     with session.begin():
         if transaction.transfer_transaction is not None:
-            raise ValueError("Transaction is already a transfer.")
+            raise TransactionConversionError
 
         # Create a transaction in other account with opposite amount
         transfer_transaction = add_transaction_to_database(
@@ -112,7 +117,7 @@ def convert_transfer_to_transaction(
 
     with session.begin():
         if transaction.transfer_transaction is None:
-            raise ValueError("Transaction is already not a transfer.")
+            raise TransferConversionError
 
         # Get incoming side of transfer
         transfer_transaction = transaction.transfer_transaction
@@ -186,7 +191,9 @@ def _update_transaction_amount(
 
             if outgoing is None:
                 # TODO(ChaoticDefense): Make this custom exception
-                raise ValueError("Could not find outgoing side of transfer")
+                raise TransactionNotFoundError(
+                    "Could not find outgoing side of transfer"
+                )
 
             update_transaction_in_database(
                 outgoing, TransactionUpdate(amount=-1 * new_amount)
