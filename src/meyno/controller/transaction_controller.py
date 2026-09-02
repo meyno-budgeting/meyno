@@ -83,7 +83,9 @@ def update_transaction_amount(
 
             if diff != 0:
                 add_split_to_transaction_in_database(
-                    session, transaction, diff, category=None
+                    session,
+                    transaction,
+                    TransactionSplitCreate(amount=diff, category_id=None),
                 )
         elif len(transaction.splits) == 0:
             # Transfer
@@ -92,9 +94,8 @@ def update_transaction_amount(
                 # Input transaction is outgoing side
                 update_transaction_in_database(
                     transaction.transfer_transaction,
-                    TransactionUpdate(amount=new_amount),
+                    TransactionUpdate(amount=-1 * new_amount),
                 )
-
             else:
                 # Input transaction is incoming side
                 # Find outgoing side
@@ -105,7 +106,7 @@ def update_transaction_amount(
                     raise ValueError("Could not find outgoing side of transfer")
 
                 update_transaction_in_database(
-                    outgoing, TransactionUpdate(amount=new_amount)
+                    outgoing, TransactionUpdate(amount=-1 * new_amount)
                 )
 
         # Update transaction amount
@@ -199,7 +200,11 @@ def convert_transfer_to_transaction(
 
         # Make single split for transaction and set amount to transaction amount
         add_split_to_transaction_in_database(
-            session, transaction=transaction, amount=transaction.amount, category=None
+            session,
+            transaction=transaction,
+            split_data=TransactionSplitCreate(
+                amount=transaction.amount, category_id=None
+            ),
         )
 
         # Delete incoming side of transfer
