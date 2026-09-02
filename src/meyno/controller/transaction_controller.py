@@ -22,22 +22,21 @@ from meyno.database.models import (
     Transaction,
     TransactionSplit,
 )
+from meyno.schemas.transaction import TransactionCreate, TransactionSplitCreate
 
 
 def create_default_transaction(session: Session, account: Account) -> Transaction:
     with session.begin():
-        default_transaction_date = datetime.datetime.now().astimezone().date()
-        default_amount = 0
+        transaction_data = TransactionCreate(account_id=account.account_id)
 
         transaction = add_transaction_to_database(
-            session=session,
-            date=default_transaction_date,
-            account=account,
-            amount=default_amount,
+            session=session, transaction_data=transaction_data
         )
 
+        split_data = TransactionSplitCreate()
+
         add_split_to_transaction_in_database(
-            session, transaction, default_amount, category=None
+            session, transaction, split_data=split_data
         )
 
         return transaction

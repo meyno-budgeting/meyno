@@ -10,6 +10,7 @@ from meyno.database.models import (
     Transaction,
     TransactionSplit,
 )
+from meyno.schemas.transaction import TransactionCreate, TransactionSplitCreate
 
 
 def get_transaction_by_id_from_database(
@@ -44,19 +45,15 @@ def get_transactions_by_payee_from_database(
 
 def add_transaction_to_database(
     session: Session,
-    date: datetime.date,
-    account: Account,
-    amount: int,
-    payee: Payee | None = None,
-    notes: str | None = None,
+    transaction_data: TransactionCreate,
 ) -> Transaction:
 
     transaction = Transaction(
-        date=date,
-        account=account,
-        amount=amount,
-        payee=payee,
-        notes=notes,
+        date=transaction_data.date,
+        account_id=transaction_data.account_id,
+        amount=transaction_data.amount,
+        payee_id=transaction_data.payee_id,
+        notes=transaction_data.notes,
     )
 
     session.add(transaction)
@@ -128,15 +125,17 @@ def delete_transaction_from_database(
 
 
 def add_split_to_transaction_in_database(
-    session: Session,
-    transaction: Transaction,
-    amount: int = 0,
-    category: Category | None = None,
+    session: Session, transaction: Transaction, split_data: TransactionSplitCreate
 ) -> TransactionSplit:
 
-    split = TransactionSplit(transaction=transaction, category=category, amount=amount)
+    split = TransactionSplit(
+        transaction=transaction,
+        category_id=split_data.category_id,
+        amount=split_data.amount,
+    )
 
     session.add(split)
+
     return split
 
 
