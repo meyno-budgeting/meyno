@@ -1,19 +1,16 @@
-import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from meyno.database.models import (
-    Account,
-    Category,
-    Payee,
-    Transaction,
-    TransactionSplit,
-)
+from meyno.database.models import Account, Category, Transaction, TransactionSplit
 
 if TYPE_CHECKING:
-    from meyno.schemas.transaction import TransactionCreate, TransactionSplitCreate
+    from meyno.schemas.transaction import (
+        TransactionCreate,
+        TransactionSplitCreate,
+        TransactionUpdate,
+    )
 
 
 def get_transaction_by_id_from_database(
@@ -51,57 +48,33 @@ def add_transaction_to_database(
     return transaction
 
 
-def update_transaction_date_in_database(
-    transaction: Transaction, new_date: datetime.date
+def update_transaction_in_database(
+    transaction: Transaction,
+    update: TransactionUpdate,
 ) -> Transaction:
 
-    transaction.date = new_date
+    if update.date is not None:
+        transaction.date = update.date
 
-    return transaction
+    if update.account_id is not None:
+        transaction.account_id = update.account_id
 
+    if update.payee_id is not None:
+        transaction.payee_id = update.payee_id
 
-def update_transaction_account_in_database(
-    transaction: Transaction, new_account: Account
-) -> Transaction:
+    if update.amount is not None:
+        transaction.amount = update.amount
 
-    transaction.account = new_account
-
-    return transaction
-
-
-def update_transaction_payee_in_database(
-    transaction: Transaction, new_payee: Payee | None
-) -> Transaction:
-
-    transaction.payee = new_payee
-
-    return transaction
-
-
-def update_transaction_amount_in_database(
-    transaction: Transaction, new_amount: int
-) -> Transaction:
-
-    transaction.amount = new_amount
-
-    return transaction
-
-
-def update_transaction_notes_in_database(
-    transaction: Transaction, new_notes: str | None
-) -> Transaction:
-
-    transaction.notes = new_notes
+    if update.notes is not None:
+        transaction.notes = update.notes
 
     return transaction
 
 
 def update_transaction_splits_in_database(
-    transaction: Transaction, new_splits: list[TransactionSplit] | None
+    transaction: Transaction,
+    new_splits: list[TransactionSplit],
 ) -> Transaction:
-
-    if new_splits is None:
-        new_splits = []
 
     transaction.splits = new_splits
 

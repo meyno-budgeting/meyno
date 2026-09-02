@@ -11,6 +11,7 @@ from meyno.application.transaction import (
     update_split_amount_in_database,
     update_transaction_amount_in_database,
     update_transaction_date_in_database,
+    update_transaction_in_database,
     update_transaction_notes_in_database,
     update_transaction_payee_in_database,
     update_transaction_splits_in_database,
@@ -22,7 +23,11 @@ from meyno.database.models import (
     Transaction,
     TransactionSplit,
 )
-from meyno.schemas.transaction import TransactionCreate, TransactionSplitCreate
+from meyno.schemas.transaction import (
+    TransactionCreate,
+    TransactionSplitCreate,
+    TransactionUpdate,
+)
 
 
 def create_default_transaction(session: Session, account: Account) -> Transaction:
@@ -157,8 +162,8 @@ def convert_transaction_to_transfer(
         transfer_transaction = create_default_transaction(session, transfer_account)
 
         # Set amount of transfer side to equal and opposite
-        update_transaction_amount_in_database(
-            transfer_transaction, -1 * transaction.amount
+        update_transaction_in_database(
+            transfer_transaction, TransactionUpdate(amount=-1 * transaction.amount)
         )
 
         # Set splits to empty for both sides
