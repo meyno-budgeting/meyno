@@ -69,7 +69,7 @@ def delete_transaction(session: Session, transaction: Transaction) -> None:
             incoming = transaction.transfer_transaction
         else:
             # Check whether this transaction is the incoming side.
-            outgoing = find_outgoing_side_of_transfer(session, transaction)
+            outgoing = _find_outgoing_side_of_transfer(session, transaction)
 
             if outgoing is None:
                 # This transaction is not part of a transfer.
@@ -95,6 +95,12 @@ def convert_transaction_to_transfer(
         if transaction.transfer_transaction is not None:
             raise TransactionConversionError
 
+        # Check if this not incoming side of a transfer
+        outgoing = _find_outgoing_side_of_transfer(transaction)
+
+        if outgoing is not None:
+            raise TransactionConversionError
+
         # Create a transaction in other account with opposite amount
         transfer_transaction = add_transaction_to_database(
             session,
@@ -116,26 +122,36 @@ def convert_transfer_to_transaction(
 ) -> Transaction:
 
     with session.begin():
-        if transaction.transfer_transaction is None:
-            raise TransferConversionError
+        if transaction.transfer_transaction is not None:
+            # Input is the outgoing side of the transfer.
+            other_side = transaction.transfer_transaction
 
-        # Get incoming side of transfer
-        transfer_transaction = transaction.transfer_transaction
+            # Break the transfer relationship.
+            transaction.transfer_transaction = None
 
-        # Unlink outgoing transfer
-        transaction.transfer_transaction = None
+        else:
+            # Input may be the incoming side of the transfer.
+            other_side = _find_outgoing_side_of_transfer(session, transaction)
 
-        # Make single split for transaction and set amount to transaction amount
+            if other_side is None:
+                raise TransferConversionError
+
+            # Break the transfer relationship from the outgoing side.
+            other_side.transfer_transaction = None
+
+        # Make the input transaction a normal transaction
+        # by giving it a single uncategorized split.
         add_split_to_transaction_in_database(
             session,
             transaction=transaction,
             split_data=TransactionSplitCreate(
-                amount=transaction.amount, category_id=None
+                amount=transaction.amount,
+                category_id=None,
             ),
         )
 
-        # Delete incoming side of transfer
-        delete_transaction_from_database(transfer_transaction)
+        # Delete the other side of the transfer.
+        delete_transaction_from_database(session, other_side)
 
         return transaction
 
@@ -187,10 +203,9 @@ def _update_transaction_amount(
         else:
             # Input transaction is incoming side
             # Find outgoing side
-            outgoing = find_outgoing_side_of_transfer(session, transaction)
+            outgoing = _find_outgoing_side_of_transfer(session, transaction)
 
             if outgoing is None:
-                # TODO(ChaoticDefense): Make this custom exception
                 raise TransactionNotFoundError(
                     "Could not find outgoing side of transfer"
                 )
@@ -208,7 +223,7 @@ def _get_split_amount_total(transaction: Transaction) -> int:
     return total
 
 
-def find_outgoing_side_of_transfer(
+def _find_outgoing_side_of_transfer(
     session: Session, transaction: Transaction
 ) -> Transaction | None:
 
