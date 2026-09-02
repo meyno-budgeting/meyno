@@ -33,19 +33,6 @@ def get_all_transactions_for_account_from_database(
     return list(account.transactions)
 
 
-def get_transactions_by_payee_from_database(
-    session: Session,
-    payee: Payee | None,
-) -> list[Transaction]:
-
-    if payee is None:
-        statement = select(Transaction).where(Transaction.payee_id.is_(None))
-
-        return list(session.scalars(statement))
-
-    return list(payee.transactions)
-
-
 def add_transaction_to_database(
     session: Session,
     transaction_data: TransactionCreate,
