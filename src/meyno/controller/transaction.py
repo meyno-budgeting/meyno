@@ -11,7 +11,7 @@ from meyno.application.transaction import (
     update_transaction_splits_in_database,
 )
 from meyno.database.models import Account, Category, Transaction, TransactionSplit
-from meyno.exceptions.transactions import (
+from meyno.exceptions.transaction import (
     TransactionConversionError,
     TransactionNotFoundError,
     TransferConversionError,
@@ -105,7 +105,7 @@ def convert_transaction_to_transfer(
         transfer_transaction = add_transaction_to_database(
             session,
             TransactionCreate(
-                account_id=transfer_account.account_id, amount=1 * transaction.amount
+                account_id=transfer_account.account_id, amount=-1 * transaction.amount
             ),
         )
 

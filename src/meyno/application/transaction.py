@@ -20,7 +20,7 @@ def get_transaction_by_id_from_database(
 
 
 def get_all_transactions_from_database(session: Session) -> list[Transaction]:
-    return session.scalars(select(Transaction))
+    return list(session.scalars(select(Transaction)))
 
 
 def get_all_transactions_for_account_from_database(
