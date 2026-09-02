@@ -1,5 +1,3 @@
-import datetime
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -12,13 +10,7 @@ from meyno.application.transaction import (
     update_transaction_in_database,
     update_transaction_splits_in_database,
 )
-from meyno.database.models import (
-    Account,
-    Category,
-    Payee,
-    Transaction,
-    TransactionSplit,
-)
+from meyno.database.models import Account, Category, Transaction, TransactionSplit
 from meyno.schemas.transaction import (
     TransactionCreate,
     TransactionSplitCreate,
@@ -47,84 +39,15 @@ def get_all_transactions(session: Session) -> list[Transaction]:
     return get_all_transactions_from_database(session)
 
 
-def update_transaction_date(
-    session: Session, transaction: Transaction, new_date: datetime.date
+def update_transaction(
+    session: Session, transaction: Transaction, update: TransactionUpdate
 ) -> Transaction:
 
     with session.begin():
-        return update_transaction_in_database(
-            transaction, TransactionUpdate(date=new_date)
-        )
+        if update.amount is not None:
+            _update_transaction_amount(session, transaction, update.amount)
 
-
-def update_transaction_payee(
-    session: Session, transaction: Transaction, new_payee: Payee | None
-) -> Transaction:
-
-    with session.begin():
-        return update_transaction_in_database(
-            transaction, TransactionUpdate(payee_id=new_payee.payee_id)
-        )
-
-
-def update_transaction_amount(
-    session: Session, transaction: Transaction, new_amount: int
-) -> Transaction:
-
-    with session.begin():
-        if len(transaction.splits) == 1:
-            # "Normal" non-transfer transaction
-            # Update the only split amount as well
-            update_split_amount_in_database(transaction.splits[0], new_amount)
-        elif len(transaction.splits) > 1:
-            split_total = _get_split_amount_total(transaction)
-
-            diff = new_amount - split_total
-
-            if diff != 0:
-                add_split_to_transaction_in_database(
-                    session,
-                    transaction,
-                    TransactionSplitCreate(amount=diff, category_id=None),
-                )
-        elif len(transaction.splits) == 0:
-            # Transfer
-            # Update other side of transaction
-            if transaction.transfer_transaction is not None:
-                # Input transaction is outgoing side
-                update_transaction_in_database(
-                    transaction.transfer_transaction,
-                    TransactionUpdate(amount=-1 * new_amount),
-                )
-            else:
-                # Input transaction is incoming side
-                # Find outgoing side
-                outgoing = find_outgoing_side_of_transfer(session, transaction)
-
-                if outgoing is None:
-                    # TODO(ChaoticDefense): Make this custom exception
-                    raise ValueError("Could not find outgoing side of transfer")
-
-                update_transaction_in_database(
-                    outgoing, TransactionUpdate(amount=-1 * new_amount)
-                )
-
-        # Update transaction amount
-        transaction = update_transaction_in_database(
-            transaction, TransactionUpdate(amount=new_amount)
-        )
-
-        return transaction
-
-
-def update_transaction_notes(
-    session: Session, transaction: Transaction, new_notes: str | None
-) -> Transaction:
-
-    with session.begin():
-        return update_transaction_in_database(
-            transaction, TransactionUpdate(notes=new_notes)
-        )
+        return update_transaction_in_database(transaction, update)
 
 
 def delete_transaction(session: Session, transaction: Transaction) -> None:
@@ -226,6 +149,48 @@ def add_split_to_transaction(
             split_data.category_id = category.category_id
 
         return add_split_to_transaction_in_database(session, transaction, split_data)
+
+
+def _update_transaction_amount(
+    session: Session, transaction: Transaction, new_amount: int
+) -> None:
+
+    if len(transaction.splits) == 1:
+        # "Normal" non-transfer transaction
+        # Update the only split amount as well
+        update_split_amount_in_database(transaction.splits[0], new_amount)
+    elif len(transaction.splits) > 1:
+        split_total = _get_split_amount_total(transaction)
+
+        diff = new_amount - split_total
+
+        if diff != 0:
+            add_split_to_transaction_in_database(
+                session,
+                transaction,
+                TransactionSplitCreate(amount=diff, category_id=None),
+            )
+    elif len(transaction.splits) == 0:
+        # Transfer
+        # Update other side of transaction
+        if transaction.transfer_transaction is not None:
+            # Input transaction is outgoing side
+            update_transaction_in_database(
+                transaction.transfer_transaction,
+                TransactionUpdate(amount=-1 * new_amount),
+            )
+        else:
+            # Input transaction is incoming side
+            # Find outgoing side
+            outgoing = find_outgoing_side_of_transfer(session, transaction)
+
+            if outgoing is None:
+                # TODO(ChaoticDefense): Make this custom exception
+                raise ValueError("Could not find outgoing side of transfer")
+
+            update_transaction_in_database(
+                outgoing, TransactionUpdate(amount=-1 * new_amount)
+            )
 
 
 def _get_split_amount_total(transaction: Transaction) -> int:
