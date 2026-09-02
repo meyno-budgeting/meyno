@@ -167,17 +167,16 @@ def convert_transaction_to_transfer(
         if transaction.transfer_transaction is not None:
             raise ValueError("Transaction is already a transfer.")
 
-        # Create a transaction in other account
-        transfer_transaction = create_default_transaction(session, transfer_account)
-
-        # Set amount of transfer side to equal and opposite
-        update_transaction_in_database(
-            transfer_transaction, TransactionUpdate(amount=-1 * transaction.amount)
+        # Create a transaction in other account with opposite amount
+        transfer_transaction = add_transaction_to_database(
+            session,
+            TransactionCreate(
+                account_id=transfer_account.account_id, amount=1 * transaction.amount
+            ),
         )
 
-        # Set splits to empty for both sides
+        # Set splits to empty for input transaction
         update_transaction_splits_in_database(transaction, [])
-        update_transaction_splits_in_database(transfer_transaction, [])
 
         transaction.transfer_transaction = transfer_transaction
 
