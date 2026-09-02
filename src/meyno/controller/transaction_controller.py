@@ -220,9 +220,12 @@ def add_split_to_transaction(
 ) -> TransactionSplit:
 
     with session.begin():
-        return add_split_to_transaction_in_database(
-            session, transaction, amount, category
-        )
+        split_data = TransactionSplitCreate(amount=amount)
+
+        if category is not None:
+            split_data.category_id = category.category_id
+
+        return add_split_to_transaction_in_database(session, transaction, split_data)
 
 
 def _get_split_amount_total(transaction: Transaction) -> int:
