@@ -5,7 +5,9 @@ from meyno.application.transaction import (
     add_split_to_transaction_in_database,
     add_transaction_to_database,
     delete_transaction_from_database,
+    get_all_transactions_for_account_from_database,
     get_all_transactions_from_database,
+    get_transaction_by_id_from_database,
     update_split_amount_in_database,
     update_transaction_in_database,
     update_transaction_splits_in_database,
@@ -40,8 +42,16 @@ def create_default_transaction(session: Session, account: Account) -> Transactio
         return transaction
 
 
+def get_transaction_by_id(session: Session, transaction_id: int) -> Transaction | None:
+    return get_transaction_by_id_from_database(session, transaction_id)
+
+
 def get_all_transactions(session: Session) -> list[Transaction]:
     return get_all_transactions_from_database(session)
+
+
+def get_all_transactions_for_account(account: Account) -> list[Transaction]:
+    return get_all_transactions_for_account_from_database(account)
 
 
 def update_transaction(
