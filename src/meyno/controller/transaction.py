@@ -106,7 +106,7 @@ def convert_transaction_to_transfer(
             raise TransactionConversionError
 
         # Check if this not incoming side of a transfer
-        outgoing = _find_outgoing_side_of_transfer(transaction)
+        outgoing = _find_outgoing_side_of_transfer(session, transaction)
 
         if outgoing is not None:
             raise TransactionConversionError
