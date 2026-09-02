@@ -10,7 +10,7 @@ from meyno.application.account import (
     update_account_name_in_database,
 )
 from meyno.database.models import Account, Transaction
-from meyno.exceptions import (
+from meyno.exceptions.account import (
     AccountAlreadyExistsError,
     AccountNameEmptyError,
     AccountNotFoundError,

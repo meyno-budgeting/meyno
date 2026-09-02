@@ -10,7 +10,7 @@ from meyno.application.category import (
     get_category_by_name_from_database,
     update_category_name_in_database,
 )
-from meyno.exceptions import (
+from meyno.exceptions.category import (
     CategoryAlreadyExistsError,
     CategoryNameEmptyError,
     CategoryNotFoundError,

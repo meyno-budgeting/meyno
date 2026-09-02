@@ -10,7 +10,7 @@ from meyno.application.payee import (
     get_payee_by_name_from_database,
     update_payee_name_in_database,
 )
-from meyno.exceptions import (
+from meyno.exceptions.payee import (
     PayeeAlreadyExistsError,
     PayeeNameEmptyError,
     PayeeNotFoundError,
