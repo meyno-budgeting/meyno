@@ -9,11 +9,7 @@ from meyno.application.transaction import (
     delete_transaction_from_database,
     get_all_transactions_from_database,
     update_split_amount_in_database,
-    update_transaction_amount_in_database,
-    update_transaction_date_in_database,
     update_transaction_in_database,
-    update_transaction_notes_in_database,
-    update_transaction_payee_in_database,
     update_transaction_splits_in_database,
 )
 from meyno.database.models import (
@@ -56,7 +52,9 @@ def update_transaction_date(
 ) -> Transaction:
 
     with session.begin():
-        return update_transaction_date_in_database(transaction, new_date)
+        return update_transaction_in_database(
+            transaction, TransactionUpdate(date=new_date)
+        )
 
 
 def update_transaction_payee(
@@ -64,7 +62,9 @@ def update_transaction_payee(
 ) -> Transaction:
 
     with session.begin():
-        return update_transaction_payee_in_database(transaction, new_payee)
+        return update_transaction_in_database(
+            transaction, TransactionUpdate(payee_id=new_payee.payee_id)
+        )
 
 
 def update_transaction_amount(
@@ -90,9 +90,11 @@ def update_transaction_amount(
             # Update other side of transaction
             if transaction.transfer_transaction is not None:
                 # Input transaction is outgoing side
-                update_transaction_amount_in_database(
-                    transaction.transfer_transaction, new_amount
+                update_transaction_in_database(
+                    transaction.transfer_transaction,
+                    TransactionUpdate(amount=new_amount),
                 )
+
             else:
                 # Input transaction is incoming side
                 # Find outgoing side
@@ -102,10 +104,14 @@ def update_transaction_amount(
                     # TODO(ChaoticDefense): Make this custom exception
                     raise ValueError("Could not find outgoing side of transfer")
 
-                update_transaction_amount_in_database(outgoing, new_amount)
+                update_transaction_in_database(
+                    outgoing, TransactionUpdate(amount=new_amount)
+                )
 
         # Update transaction amount
-        transaction = update_transaction_amount_in_database(transaction, new_amount)
+        transaction = update_transaction_in_database(
+            transaction, TransactionUpdate(amount=new_amount)
+        )
 
         return transaction
 
@@ -115,7 +121,9 @@ def update_transaction_notes(
 ) -> Transaction:
 
     with session.begin():
-        return update_transaction_notes_in_database(transaction, new_notes)
+        return update_transaction_in_database(
+            transaction, TransactionUpdate(notes=new_notes)
+        )
 
 
 def delete_transaction(session: Session, transaction: Transaction) -> None:

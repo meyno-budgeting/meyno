@@ -19,7 +19,6 @@ class TransactionUpdate(BaseModel):
     payee_id: int | None = None
     amount: int | None = None
     notes: str | None = None
-    splits: list[TransactionSplitCreate] | None = None
 
 
 class TransactionSplitCreate(BaseModel):
