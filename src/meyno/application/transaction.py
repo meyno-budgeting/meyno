@@ -1,4 +1,5 @@
 import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -10,7 +11,9 @@ from meyno.database.models import (
     Transaction,
     TransactionSplit,
 )
-from meyno.schemas.transaction import TransactionCreate, TransactionSplitCreate
+
+if TYPE_CHECKING:
+    from meyno.schemas.transaction import TransactionCreate, TransactionSplitCreate
 
 
 def get_transaction_by_id_from_database(

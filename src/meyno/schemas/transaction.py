@@ -1,5 +1,4 @@
 import datetime
-from unicodedata import category
 
 from pydantic import BaseModel, Field
 
