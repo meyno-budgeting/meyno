@@ -108,7 +108,7 @@ def get_split_by_id_from_database(
     return session.get(TransactionSplit, split_id)
 
 
-def update_split_category(
+def update_split_category_in_database(
     split: TransactionSplit, new_category: Category
 ) -> TransactionSplit:
 
