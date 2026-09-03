@@ -25,21 +25,49 @@ from meyno.schemas.transaction import (
 )
 
 
-def create_default_transaction(session: Session, account: Account) -> Transaction:
-    with session.begin():
-        transaction_data = TransactionCreate(account_id=account.account_id)
+def create_transaction(
+    session: Session, transaction_data: TransactionCreate
+) -> Transaction:
 
+    with session.begin():
         transaction = add_transaction_to_database(
-            session=session, transaction_data=transaction_data
+            session,
+            transaction_data,
         )
 
-        split_data = TransactionSplitCreate()
-
         add_split_to_transaction_in_database(
-            session, transaction, split_data=split_data
+            session,
+            transaction,
+            TransactionSplitCreate(amount=transaction_data.amount),
         )
 
         return transaction
+
+
+def create_transfer(
+    session: Session, from_account: Account, to_account: Account, amount: int
+) -> Transaction:
+
+    with session.begin():
+        outgoing = add_transaction_to_database(
+            session,
+            TransactionCreate(
+                account_id=from_account.account_id,
+                amount=-amount,
+            ),
+        )
+
+        incoming = add_transaction_to_database(
+            session,
+            TransactionCreate(
+                account_id=to_account.account_id,
+                amount=amount,
+            ),
+        )
+
+        outgoing.transfer_transaction = incoming
+
+        return outgoing
 
 
 def get_transaction_by_id(session: Session, transaction_id: int) -> Transaction | None:
