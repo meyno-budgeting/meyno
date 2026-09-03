@@ -90,7 +90,15 @@ def update_transaction(
         if update.amount is not None:
             _update_transaction_amount(session, transaction, update.amount)
 
-        return update_transaction_in_database(transaction, update)
+        update_transaction_in_database(transaction, update)
+
+        # TODO(ChaoticDefense): Do the following for validating a transaction after updating
+        # If splits is not [], check if split total equals transaction amount
+        # If splits is [], find both sides of transaction to verify valid transfer
+        # if _get_split_amount_total(transaction) != transaction.amount:
+        #     raise ValueError("Splits total does not match Transaction amount!")
+
+        return transaction
 
 
 def delete_transaction(session: Session, transaction: Transaction) -> None:

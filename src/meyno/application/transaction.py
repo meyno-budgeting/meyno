@@ -68,15 +68,14 @@ def update_transaction_in_database(
     if update.notes is not None:
         transaction.notes = update.notes
 
-    return transaction
-
-
-def update_transaction_splits_in_database(
-    transaction: Transaction,
-    new_splits: list[TransactionSplit],
-) -> Transaction:
-
-    transaction.splits = new_splits
+    if update.splits is not None:
+        transaction.splits = [
+            TransactionSplit(
+                amount=split.amount,
+                category_id=split.category_id,
+            )
+            for split in update.splits
+        ]
 
     return transaction
 
