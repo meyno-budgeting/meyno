@@ -3,6 +3,11 @@ import datetime
 from pydantic import BaseModel, Field
 
 
+class TransactionSplitCreate(BaseModel):
+    amount: int = 0
+    category_id: int | None = None
+
+
 class TransactionCreate(BaseModel):
     date: datetime.date = Field(
         default_factory=lambda: datetime.datetime.now().astimezone().date()
@@ -21,8 +26,3 @@ class TransactionUpdate(BaseModel):
     amount: int | None = None
     notes: str | None = None
     splits: list[TransactionSplitCreate] | None = None
-
-
-class TransactionSplitCreate(BaseModel):
-    amount: int = 0
-    category_id: int | None = None
