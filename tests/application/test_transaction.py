@@ -15,7 +15,6 @@ from meyno.application.transaction import (
     update_split_amount_in_database,
     update_split_category_in_database,
     update_transaction_in_database,
-    update_transaction_splits_in_database,
 )
 from meyno.database.models import TransactionSplit
 from meyno.schemas.transaction import (
@@ -357,10 +356,7 @@ def test_update_transaction_splits_in_database(session: Session):
 
     session.flush()
 
-    result = update_transaction_splits_in_database(
-        transaction,
-        [],
-    )
+    result = update_transaction_in_database(transaction, TransactionUpdate(splits=[]))
 
     assert result is transaction
     assert transaction.splits == []
@@ -376,26 +372,20 @@ def test_update_transaction_splits_replaces_splits(session: Session):
         TransactionCreate(account_id=account.account_id),
     )
 
-    old_split = add_split_to_transaction_in_database(
+    add_split_to_transaction_in_database(
         session,
         transaction,
         TransactionSplitCreate(amount=-5000),
     )
 
-    new_split = TransactionSplit(
-        amount=-3000,
-        transaction=transaction,
-    )
-
     session.flush()
 
-    update_transaction_splits_in_database(
-        transaction,
-        [new_split],
+    update_transaction_in_database(
+        transaction, TransactionUpdate(splits=[TransactionSplitCreate(amount=-3000)])
     )
 
-    assert transaction.splits == [new_split]
-    assert old_split not in transaction.splits
+    assert len(transaction.splits) == 1
+    assert transaction.splits[0].amount == -3000
 
 
 def test_update_split_category(session: Session):

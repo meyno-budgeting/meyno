@@ -28,18 +28,17 @@ from meyno.schemas.transaction import (
 def create_transaction(
     session: Session, transaction_data: TransactionCreate
 ) -> Transaction:
-
     with session.begin():
-        transaction = add_transaction_to_database(
-            session,
-            transaction_data,
-        )
+        transaction = add_transaction_to_database(session, transaction_data)
 
-        add_split_to_transaction_in_database(
-            session,
-            transaction,
-            TransactionSplitCreate(amount=transaction_data.amount),
-        )
+        splits = transaction_data.splits
+        if splits is None:
+            splits = [TransactionSplitCreate(amount=transaction.amount)]
+
+        for split_data in splits:
+            add_split_to_transaction_in_database(session, transaction, split_data)
+
+        _validate_transaction(session, transaction)
 
         return transaction
 
@@ -92,11 +91,7 @@ def update_transaction(
 
         update_transaction_in_database(transaction, update)
 
-        # TODO(ChaoticDefense): Do the following for validating a transaction after updating
-        # If splits is not [], check if split total equals transaction amount
-        # If splits is [], find both sides of transaction to verify valid transfer
-        # if _get_split_amount_total(transaction) != transaction.amount:
-        #     raise ValueError("Splits total does not match Transaction amount!")
+        _validate_transaction(session, transaction)
 
         return transaction
 
@@ -280,3 +275,25 @@ def _find_outgoing_side_of_transfer(
     ).first()
 
     return outgoing
+
+
+def _validate_transaction(session: Session, transaction: Transaction) -> None:
+    if len(transaction.splits) > 0:
+        if _get_split_amount_total(transaction) != transaction.amount:
+            raise ValueError("Splits total does not match Transaction amount!")
+
+        return
+
+    # No splits means this must be a transfer.
+    if transaction.transfer_transaction is not None:
+        # This is the outgoing side.
+        other_side = transaction.transfer_transaction
+    else:
+        # This is the incoming side.
+        other_side = _find_outgoing_side_of_transfer(session, transaction)
+
+    if other_side is None:
+        raise ValueError("Transaction is not part of a valid transfer!")
+
+    if other_side.amount != -transaction.amount:
+        raise ValueError("Transfer amounts do not match!")
