@@ -1,5 +1,3 @@
-from datetime import date
-
 import pytest
 from sqlalchemy.orm import Session
 
@@ -8,10 +6,14 @@ from meyno.controller.account import (
     delete_account,
     get_account_by_id,
     get_account_by_name,
+    get_all_accounts,
     update_account_name,
 )
-from meyno.controller.transaction import create_transaction, get_transaction_by_id
-from meyno.database.models import Transaction
+from meyno.controller.transaction import (
+    create_transaction,
+    create_transfer,
+    get_transaction_by_id,
+)
 from meyno.exceptions.account import (
     AccountAlreadyExistsError,
     AccountNameEmptyError,
@@ -51,6 +53,11 @@ def test_add_duplicate_account(session: Session, name: str):
 
     with pytest.raises(AccountAlreadyExistsError):
         add_account(session, name)
+
+    accounts = get_all_accounts(session)
+
+    assert len(accounts) == 1
+    assert accounts[0].name == "Checking"
 
 
 def test_get_account_by_id(session: Session):
@@ -102,12 +109,17 @@ def test_get_account_by_name_strips_name(session: Session):
 def test_update_account_name(session: Session):
     account = add_account(session, "Checking")
 
-    session.expire_all()
-
     result = update_account_name(session, account, "Savings")
 
     assert result is account
     assert account.name == "Savings"
+
+    session.expire_all()
+
+    stored_account = get_account_by_id(session, account.account_id)
+
+    assert stored_account is account
+    assert stored_account.name == "Savings"
 
 
 @pytest.mark.parametrize("name", ["", "    "])
@@ -117,6 +129,8 @@ def test_update_account_name_empty_name(session: Session, name: str):
     with pytest.raises(AccountNameEmptyError):
         update_account_name(session, account, name)
 
+    assert account.name == "Checking"
+
 
 def test_update_account_name_duplicate(session: Session):
     account = add_account(session, "Checking")
@@ -125,9 +139,11 @@ def test_update_account_name_duplicate(session: Session):
     with pytest.raises(AccountAlreadyExistsError):
         update_account_name(session, account, "Savings")
 
+    assert account.name == "Checking"
+
 
 @pytest.mark.parametrize("name", ["Checking", "  Checking    "])
-def test_update_account_name_same_name(session, name):
+def test_update_account_name_same_name(session: Session, name: str):
     account = add_account(session, "Checking")
 
     result = update_account_name(session, account, name)
@@ -155,33 +171,20 @@ def test_delete_account(session):
 def test_delete_account_preserves_incoming_transfer_transaction(
     session: Session,
 ):
+
     checking = add_account(session, "Checking")
     savings = add_account(session, "Savings")
 
-    # TODO(ChaoticDefense): Make these use create_transaction
-    checking_transaction = Transaction(
-        account=checking,
-        date=date(2026, 8, 24),
-        amount=-500,
-    )
-    savings_transaction = Transaction(
-        account=savings,
-        date=date(2026, 8, 24),
-        amount=500,
-    )
+    outgoing = create_transfer(session, checking, savings, 500)
+    incoming = outgoing.transfer_transaction
 
-    session.add_all([checking_transaction, savings_transaction])
-    checking_transaction.transfer_transaction = savings_transaction
-    session.commit()
-
-    savings_transaction_id = savings_transaction.transaction_id
+    incoming_transaction_id = incoming.transaction_id
 
     delete_account(session, checking)
 
-    stored_savings_transaction = session.get(
-        Transaction,
-        savings_transaction_id,
-    )
+    session.expire_all()
+
+    stored_savings_transaction = get_transaction_by_id(session, incoming_transaction_id)
 
     assert stored_savings_transaction is not None
     assert stored_savings_transaction.transfer_transaction is None
@@ -193,28 +196,14 @@ def test_delete_account_preserves_outgoing_transfer_transaction(
     checking = add_account(session, "Checking")
     savings = add_account(session, "Savings")
 
-    checking_transaction = Transaction(
-        account=checking,
-        date=date(2026, 8, 24),
-        amount=-500,
-    )
-    savings_transaction = Transaction(
-        account=savings,
-        date=date(2026, 8, 24),
-        amount=500,
-    )
+    outgoing = create_transfer(session, checking, savings, 500)
 
-    session.add_all([checking_transaction, savings_transaction])
-    checking_transaction.transfer_transaction = savings_transaction
-    session.commit()
-
-    checking_transaction_id = checking_transaction.transaction_id
+    outgoing_transaction_id = outgoing.transaction_id
 
     delete_account(session, savings)
 
-    stored_checking_transaction = session.get(
-        Transaction,
-        checking_transaction_id,
+    stored_checking_transaction = get_transaction_by_id(
+        session, outgoing_transaction_id
     )
 
     assert stored_checking_transaction is not None

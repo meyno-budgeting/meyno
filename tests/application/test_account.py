@@ -7,7 +7,11 @@ from meyno.application.account import (
     get_account_by_name_from_database,
     update_account_name_in_database,
 )
-from meyno.database.models import Account, Transaction
+from meyno.application.transaction import (
+    add_transaction_to_database,
+    get_transaction_by_id_from_database,
+)
+from meyno.schemas.transaction import TransactionCreate
 
 
 def test_create_account(session):
@@ -92,105 +96,37 @@ def test_delete_account(session):
 def test_delete_account_deletes_transactions(session):
     account = add_account_to_database(session, "Checking")
 
-    transaction_1 = Transaction(
-        account=account,
-        date=date(2026, 8, 23),
-        amount=-10000,
+    session.commit()
+
+    account_id = account.account_id
+
+    transaction_1 = add_transaction_to_database(
+        session,
+        TransactionCreate(
+            account_id=account_id,
+            date=date(2026, 8, 23),
+            amount=-10000,
+        ),
     )
-    transaction_2 = Transaction(
-        account=account,
-        date=date(2026, 8, 23),
-        amount=50000,
+    transaction_2 = add_transaction_to_database(
+        session,
+        TransactionCreate(
+            account_id=account_id,
+            date=date(2026, 8, 23),
+            amount=-50000,
+        ),
     )
 
-    session.add_all([transaction_1, transaction_2])
     session.flush()
 
     transaction_1_id = transaction_1.transaction_id
     transaction_2_id = transaction_2.transaction_id
-    account_id = account.account_id
 
     delete_account_from_database(session, account)
 
     session.commit()
     session.expire_all()
 
-    assert session.get(Account, account_id) is None
-    assert session.get(Transaction, transaction_1_id) is None
-    assert session.get(Transaction, transaction_2_id) is None
-
-
-## TODO(ChaoticDefense): Move this test to controller layer
-# def test_delete_account_preserves_incoming_transfer_transaction(session):
-#     checking = create_account(session, "Checking")
-#     savings = create_account(session, "Savings")
-
-#     checking_transaction = Transaction(
-#         account=checking,
-#         date=date(2026, 8, 24),
-#         amount=-500,
-#     )
-
-#     savings_transaction = Transaction(
-#         account=savings,
-#         date=date(2026, 8, 24),
-#         amount=500,
-#     )
-
-#     session.add_all([checking_transaction, savings_transaction])
-
-#     checking_transaction.transfer_transaction = savings_transaction
-#     session.flush()
-
-#     savings_transaction_id = savings_transaction.transaction_id
-
-#     delete_account(session, checking)
-
-#     session.commit()
-#     session.expire_all()
-
-#     stored_savings_transaction = session.get(
-#         Transaction,
-#         savings_transaction_id,
-#     )
-
-#     assert stored_savings_transaction is not None
-#     assert stored_savings_transaction.transfer_transaction is None
-
-
-## TODO(ChaoticDefense): Move this test to controller layer
-# def test_delete_account_preserves_outgoing_transfer_transaction(session):
-#     checking = create_account(session, "Checking")
-#     savings = create_account(session, "Savings")
-
-#     checking_transaction = Transaction(
-#         account=checking,
-#         date=date(2026, 8, 24),
-#         amount=-500,
-#     )
-
-#     savings_transaction = Transaction(
-#         account=savings,
-#         date=date(2026, 8, 24),
-#         amount=500,
-#     )
-
-#     session.add_all([checking_transaction, savings_transaction])
-
-#     checking_transaction.transfer_transaction = savings_transaction
-#     session.flush()
-
-#     checking_transaction_id = checking_transaction.transaction_id
-
-#     delete_account(session, savings)
-
-#     session.commit()
-#     session.expire_all()
-
-#     stored_checking_transaction = session.get(
-#         Transaction,
-#         checking_transaction_id,
-#     )
-
-#     assert stored_checking_transaction is not None
-#     assert stored_checking_transaction.transfer_transaction is None
+    assert get_account_by_id_from_database(session, account_id) is None
+    assert get_transaction_by_id_from_database(session, transaction_1_id) is None
+    assert get_transaction_by_id_from_database(session, transaction_2_id) is None
