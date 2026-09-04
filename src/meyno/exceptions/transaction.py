@@ -21,3 +21,10 @@ class TransferConversionError(TransactionError):
 
     def __init__(self) -> None:
         super().__init__("Transaction is already not a transfer")
+
+
+class InvalidTransactionError(TransactionError):
+    """Raised when a transaction or transfer is invalid after creating or updating"""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)

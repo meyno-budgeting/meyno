@@ -13,6 +13,7 @@ from meyno.application.transaction import (
 )
 from meyno.database.models import Account, Category, Transaction, TransactionSplit
 from meyno.exceptions.transaction import (
+    InvalidTransactionError,
     TransactionConversionError,
     TransactionNotFoundError,
     TransferConversionError,
@@ -278,21 +279,26 @@ def _find_outgoing_side_of_transfer(
 
 def _validate_transaction(session: Session, transaction: Transaction) -> None:
     if len(transaction.splits) > 0:
+        if transaction.transfer_transaction is not None:
+            raise InvalidTransactionError(
+                "A transaction with splits cannot be a transfer!"
+            )
+
         if _get_split_amount_total(transaction) != transaction.amount:
-            raise ValueError("Splits total does not match Transaction amount!")
+            raise InvalidTransactionError(
+                "Splits total does not match Transaction amount!"
+            )
 
         return
 
     # No splits means this must be a transfer.
     if transaction.transfer_transaction is not None:
-        # This is the outgoing side.
         other_side = transaction.transfer_transaction
     else:
-        # This is the incoming side.
         other_side = _find_outgoing_side_of_transfer(session, transaction)
 
     if other_side is None:
-        raise ValueError("Transaction is not part of a valid transfer!")
+        raise InvalidTransactionError("Transaction is not part of a valid transfer!")
 
     if other_side.amount != -transaction.amount:
-        raise ValueError("Transfer amounts do not match!")
+        raise InvalidTransactionError("Transfer amounts do not match!")
