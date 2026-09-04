@@ -1,10 +1,13 @@
 from datetime import date
 
+from sqlalchemy.orm import Session
+
 from meyno.application.account import (
     add_account_to_database,
     delete_account_from_database,
     get_account_by_id_from_database,
     get_account_by_name_from_database,
+    get_all_accounts_from_database,
     update_account_name_in_database,
 )
 from meyno.application.transaction import (
@@ -14,7 +17,7 @@ from meyno.application.transaction import (
 from meyno.schemas.transaction import TransactionCreate
 
 
-def test_create_account(session):
+def test_create_account(session: Session):
     account = add_account_to_database(session, "Checking")
 
     session.commit()
@@ -27,7 +30,7 @@ def test_create_account(session):
     assert stored_account.account_id is not None
 
 
-def test_get_account_by_id(session):
+def test_get_account_by_id(session: Session):
     account = add_account_to_database(session, "Checking")
 
     session.flush()
@@ -39,7 +42,7 @@ def test_get_account_by_id(session):
     assert result.name == "Checking"
 
 
-def test_get_account_by_name(session):
+def test_get_account_by_name(session: Session):
     account = add_account_to_database(session, "Checking")
 
     result = get_account_by_name_from_database(session, "Checking")
@@ -49,19 +52,36 @@ def test_get_account_by_name(session):
     assert result.name == "Checking"
 
 
-def test_get_account_by_id_not_found(session):
+def test_get_account_by_id_not_found(session: Session):
     result = get_account_by_id_from_database(session, 999)
 
     assert result is None
 
 
-def test_get_account_by_name_not_found(session):
+def test_get_account_by_name_not_found(session: Session):
     result = get_account_by_name_from_database(session, "Does Not Exist")
 
     assert result is None
 
 
-def test_update_account_name(session):
+def test_get_all_accounts_from_database(session: Session):
+    result = get_all_accounts_from_database(session)
+
+    assert len(result) == 0
+
+    checking = add_account_to_database(session, "Checking")
+    savings = add_account_to_database(session, "Savings")
+
+    session.commit()
+
+    result = get_all_accounts_from_database(session)
+
+    assert len(result) == 2
+    assert result[0] is checking
+    assert result[1] is savings
+
+
+def test_update_account_name(session: Session):
     account = add_account_to_database(session, "Checking")
 
     session.flush()
@@ -80,7 +100,7 @@ def test_update_account_name(session):
     assert stored_account.name == "Savings"
 
 
-def test_delete_account(session):
+def test_delete_account(session: Session):
     account = add_account_to_database(session, "Checking")
 
     session.flush()
@@ -93,7 +113,7 @@ def test_delete_account(session):
     assert get_account_by_id_from_database(session, account.account_id) is None
 
 
-def test_delete_account_deletes_transactions(session):
+def test_delete_account_deletes_transactions(session: Session):
     account = add_account_to_database(session, "Checking")
 
     session.commit()

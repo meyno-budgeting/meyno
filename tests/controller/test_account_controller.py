@@ -152,7 +152,7 @@ def test_update_account_name_same_name(session: Session, name: str):
     assert account.name == "Checking"
 
 
-def test_delete_account(session):
+def test_delete_account(session: Session):
     account = add_account(session, "Checking")
 
     transaction = create_transaction(
