@@ -16,7 +16,6 @@ from meyno.application.transaction import (
     update_split_category_in_database,
     update_transaction_in_database,
 )
-from meyno.database.models import TransactionSplit
 from meyno.schemas.transaction import (
     TransactionCreate,
     TransactionSplitCreate,

@@ -10,7 +10,6 @@ from meyno.application.transaction import (
     get_transaction_by_id_from_database,
     update_split_amount_in_database,
     update_transaction_in_database,
-    update_transaction_splits_in_database,
 )
 from meyno.database.models import Account, Category, Transaction, TransactionSplit
 from meyno.exceptions.transaction import (
@@ -151,7 +150,7 @@ def convert_transaction_to_transfer(
         )
 
         # Set splits to empty for input transaction
-        update_transaction_splits_in_database(transaction, [])
+        update_transaction_in_database(transaction, TransactionUpdate(splits=[]))
 
         transaction.transfer_transaction = transfer_transaction
 
