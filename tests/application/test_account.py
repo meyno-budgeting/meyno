@@ -23,33 +23,6 @@ def test_create_account(session):
     assert stored_account.account_id is not None
 
 
-# def test_create_account_empty_name(session):
-#     with pytest.raises(ValueError, match=re.escape("Account name cannot be empty.")):
-#         add_account_to_database(session, "  ")
-
-
-# def test_create_duplicate_account(session):
-#     add_account_to_database(session, "Checking")
-
-#     with pytest.raises(ValueError, match="Account already exists: Checking"):
-#         add_account_to_database(session, "Checking")
-
-
-# def test_create_account_strips_name(session):
-#     account = add_account_to_database(session, "  Checking    ")
-
-#     session.flush()
-
-#     assert account.name == "Checking"
-
-#     session.expire_all()
-
-#     stored_account = get_account_by_id(session, account.account_id)
-
-#     assert stored_account is not None
-#     assert stored_account.name == "Checking"
-
-
 def test_get_account_by_id(session):
     account = add_account_to_database(session, "Checking")
 
@@ -101,53 +74,6 @@ def test_update_account_name(session):
 
     assert stored_account is not None
     assert stored_account.name == "Savings"
-
-
-# def test_update_account_name_empty_name(session):
-#     account = add_account_to_database(session, "Checking")
-
-#     with pytest.raises(
-#         ValueError,
-#         match=re.escape("Account name cannot be empty."),
-#     ):
-#         update_account_name_in_database(account, "  ")
-
-
-# def test_update_account_name_same_name(session):
-#     account = add_account_to_database(session, "Checking")
-
-#     result = update_account_name_in_database(account, "Checking")
-
-#     assert result is account
-#     assert result.name == "Checking"
-
-
-# def test_update_account_name_duplicate(session):
-#     add_account_to_database(session, "Checking")
-#     savings = add_account_to_database(session, "Savings")
-
-#     with pytest.raises(ValueError, match=re.escape("Account already exists: Checking")):
-#         update_account_name_in_database(savings, "Checking")
-
-#     assert savings.name == "Savings"
-
-
-# def test_update_account_name_strips_name(session):
-#     account = add_account_to_database(session, "Checking")
-
-#     session.flush()
-
-#     result = update_account_name_in_database(account, "  Savings  ")
-
-#     assert result.name == "Savings"
-
-#     session.commit()
-#     session.expire_all()
-
-#     stored_account = get_account_by_id(session, account.account_id)
-
-#     assert stored_account is not None
-#     assert stored_account.name == "Savings"
 
 
 def test_delete_account(session):
