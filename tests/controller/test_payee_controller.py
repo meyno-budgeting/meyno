@@ -106,6 +106,23 @@ def test_get_payee_by_name_strips_name(session: Session):
     assert result is payee
 
 
+def test_get_all_payees(session: Session):
+    result = get_all_payees(session)
+
+    assert len(result) == 0
+
+    walmart = add_payee(session, "Walmart")
+    gamestop = add_payee(session, "GameStop")
+
+    session.expire_all()
+
+    result = get_all_payees(session)
+
+    assert len(result) == 2
+    assert result[0] is walmart
+    assert result[1] is gamestop
+
+
 def test_update_payee_name(session: Session):
     payee = add_payee(session, "Walmart")
 

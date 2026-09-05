@@ -66,6 +66,7 @@ def test_get_all_payees_from_database(session: Session):
     savings = add_payee_to_database(session, "GameStop")
 
     session.commit()
+    session.expire_all()
 
     result = get_all_payees_from_database(session)
 

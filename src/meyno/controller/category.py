@@ -67,7 +67,8 @@ def get_category_by_name(session: Session, category_name: str) -> Category:
 
 
 def get_all_categories(session: Session) -> list[Category]:
-    return get_all_categories_from_database(session)
+    with session.begin():
+        return get_all_categories_from_database(session)
 
 
 def update_category_name(

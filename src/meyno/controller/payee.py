@@ -67,7 +67,8 @@ def get_payee_by_name(session: Session, payee_name: str) -> Payee:
 
 
 def get_all_payees(session: Session) -> list[Payee]:
-    return get_all_payees_from_database(session)
+    with session.begin():
+        return get_all_payees_from_database(session)
 
 
 def update_payee_name(session: Session, payee: Payee, new_name: str) -> Payee:

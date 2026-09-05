@@ -64,7 +64,8 @@ def get_account_by_name(session: Session, account_name: str) -> Account:
 
 
 def get_all_accounts(session: Session) -> list[Account]:
-    return get_all_accounts_from_database(session)
+    with session.begin():
+        return get_all_accounts_from_database(session)
 
 
 def update_account_name(session: Session, account: Account, new_name: str) -> Account:

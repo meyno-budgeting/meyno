@@ -73,6 +73,7 @@ def test_get_all_accounts_from_database(session: Session):
     savings = add_account_to_database(session, "Savings")
 
     session.commit()
+    session.expire_all()
 
     result = get_all_accounts_from_database(session)
 

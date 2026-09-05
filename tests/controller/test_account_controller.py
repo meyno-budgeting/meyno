@@ -122,6 +122,23 @@ def test_update_account_name(session: Session):
     assert stored_account.name == "Savings"
 
 
+def test_get_all_accounts(session: Session):
+    result = get_all_accounts(session)
+
+    assert len(result) == 0
+
+    checking = add_account(session, "Checking")
+    savings = add_account(session, "Savings")
+
+    session.expire_all()
+
+    result = get_all_accounts(session)
+
+    assert len(result) == 2
+    assert result[0] is checking
+    assert result[1] is savings
+
+
 @pytest.mark.parametrize("name", ["", "    "])
 def test_update_account_name_empty_name(session: Session, name: str):
     account = add_account(session, "Checking")
