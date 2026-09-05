@@ -1,8 +1,8 @@
-"""create initial database schema
+"""create initial schema
 
-Revision ID: 254853da3043
+Revision ID: 6f931b359d00
 Revises: 
-Create Date: 2026-08-22 20:42:27.490434
+Create Date: 2026-09-04 19:31:26.690653
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '254853da3043'
+revision: str = '6f931b359d00'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -48,9 +48,9 @@ def upgrade() -> None:
     sa.Column('notes', sa.String(length=75), nullable=True),
     sa.Column('transfer_transaction_id', sa.Integer(), nullable=True),
     sa.CheckConstraint('transfer_transaction_id IS NULL OR transfer_transaction_id != transaction_id', name='ck_transaction_transfer_not_self'),
-    sa.ForeignKeyConstraint(['account_id'], ['account.account_id'], ),
-    sa.ForeignKeyConstraint(['payee_id'], ['payee.payee_id'], ),
-    sa.ForeignKeyConstraint(['transfer_transaction_id'], ['transaction.transaction_id'], ),
+    sa.ForeignKeyConstraint(['account_id'], ['account.account_id'], name='fk_transaction_account'),
+    sa.ForeignKeyConstraint(['payee_id'], ['payee.payee_id'], name='fk_transaction_payee', ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['transfer_transaction_id'], ['transaction.transaction_id'], name='fk_transaction_transfer'),
     sa.PrimaryKeyConstraint('transaction_id')
     )
     op.create_table('transaction_split',
@@ -58,8 +58,8 @@ def upgrade() -> None:
     sa.Column('transaction_id', sa.Integer(), nullable=False),
     sa.Column('category_id', sa.Integer(), nullable=True),
     sa.Column('amount', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['category_id'], ['category.category_id'], ),
-    sa.ForeignKeyConstraint(['transaction_id'], ['transaction.transaction_id'], ),
+    sa.ForeignKeyConstraint(['category_id'], ['category.category_id'], name='fk_transaction_split_category', ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['transaction_id'], ['transaction.transaction_id'], name='fk_transaction_split_transaction'),
     sa.PrimaryKeyConstraint('transaction_split_id')
     )
     # ### end Alembic commands ###

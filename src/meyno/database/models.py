@@ -55,12 +55,19 @@ class Transaction(Base):
     date: Mapped[date] = mapped_column(Date, nullable=False)
 
     account_id: Mapped[int] = mapped_column(
-        ForeignKey(column="account.account_id"),
+        ForeignKey(
+            column="account.account_id",
+            name="fk_transaction_account",
+        ),
         nullable=False,
     )
 
     payee_id: Mapped[int | None] = mapped_column(
-        ForeignKey(column="payee.payee_id"),
+        ForeignKey(
+            column="payee.payee_id",
+            name="fk_transaction_payee",
+            ondelete="SET NULL",
+        ),
         nullable=True,
     )
 
@@ -70,7 +77,11 @@ class Transaction(Base):
     notes: Mapped[str | None] = mapped_column(String(75), nullable=True)
 
     transfer_transaction_id: Mapped[int | None] = mapped_column(
-        ForeignKey("transaction.transaction_id"), nullable=True
+        ForeignKey(
+            "transaction.transaction_id",
+            name="fk_transaction_transfer",
+        ),
+        nullable=True,
     )
 
     account: Mapped[Account] = relationship(back_populates="transactions")
@@ -115,11 +126,21 @@ class TransactionSplit(Base):
     transaction_split_id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     transaction_id: Mapped[int] = mapped_column(
-        ForeignKey("transaction.transaction_id"), nullable=False
+        ForeignKey(
+            "transaction.transaction_id",
+            name="fk_transaction_split_transaction",
+        ),
+        nullable=False,
     )
 
     category_id: Mapped[int | None] = mapped_column(
-        ForeignKey("category.category_id"), nullable=True, unique=False
+        ForeignKey(
+            "category.category_id",
+            name="fk_transaction_split_category",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        unique=False,
     )
 
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
