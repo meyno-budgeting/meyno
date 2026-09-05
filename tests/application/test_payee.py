@@ -1,20 +1,20 @@
-import re
-
-import pytest
+from sqlalchemy.orm import Session
 
 from meyno.application.payee import (
     add_payee_to_database,
     delete_payee_from_database,
+    get_all_payees_from_database,
     get_payee_by_id_from_database,
     get_payee_by_name_from_database,
     update_payee_name_in_database,
 )
 
 
-def test_create_payee(session):
+def test_create_payee(session: Session):
     payee = add_payee_to_database(session, "Walmart")
 
-    session.flush()
+    session.commit()
+    session.expire_all()
 
     stored_payee = get_payee_by_id_from_database(session, payee.payee_id)
 
@@ -23,34 +23,7 @@ def test_create_payee(session):
     assert stored_payee.payee_id is not None
 
 
-# def test_create_payee_empty_name(session):
-#     with pytest.raises(ValueError, match=re.escape("Payee name cannot be empty.")):
-#         add_payee_to_database(session, "  ")
-
-
-# def test_create_duplicate_payee(session):
-#     add_payee_to_database(session, "Walmart")
-
-#     with pytest.raises(ValueError, match="Payee already exists: Walmart"):
-#         add_payee_to_database(session, "Walmart")
-
-
-# def test_create_payee_strips_name(session):
-#     payee = add_payee_to_database(session, "  Walmart    ")
-
-#     session.flush()
-
-#     assert payee.name == "Walmart"
-
-#     session.expire_all()
-
-#     stored_payee = get_payee_by_id_from_database(session, payee.payee_id)
-
-#     assert stored_payee is not None
-#     assert stored_payee.name == "Walmart"
-
-
-def test_get_payee_by_id(session):
+def test_get_payee_by_id(session: Session):
     payee = add_payee_to_database(session, "Walmart")
 
     session.flush()
@@ -62,10 +35,8 @@ def test_get_payee_by_id(session):
     assert result.name == "Walmart"
 
 
-def test_get_payee_by_name(session):
+def test_get_payee_by_name(session: Session):
     payee = add_payee_to_database(session, "Walmart")
-
-    session.flush()
 
     result = get_payee_by_name_from_database(session, "Walmart")
 
@@ -74,19 +45,36 @@ def test_get_payee_by_name(session):
     assert result.name == "Walmart"
 
 
-def test_get_payee_by_id_not_found(session):
+def test_get_payee_by_id_not_found(session: Session):
     result = get_payee_by_id_from_database(session, 999)
 
     assert result is None
 
 
-def test_get_payee_by_name_not_found(session):
+def test_get_payee_by_name_not_found(session: Session):
     result = get_payee_by_name_from_database(session, "Does Not Exist")
 
     assert result is None
 
 
-def test_update_payee_name(session):
+def test_get_all_payees_from_database(session: Session):
+    result = get_all_payees_from_database(session)
+
+    assert len(result) == 0
+
+    checking = add_payee_to_database(session, "Walmart")
+    savings = add_payee_to_database(session, "GameStop")
+
+    session.commit()
+
+    result = get_all_payees_from_database(session)
+
+    assert len(result) == 2
+    assert result[0] is checking
+    assert result[1] is savings
+
+
+def test_update_payee_name(session: Session):
     payee = add_payee_to_database(session, "Walmart")
 
     session.flush()
@@ -105,54 +93,7 @@ def test_update_payee_name(session):
     assert stored_payee.name == "GameStop"
 
 
-# def test_update_payee_name_empty_name(session):
-#     payee = add_payee_to_database(session, "Walmart")
-
-#     with pytest.raises(
-#         ValueError,
-#         match=re.escape("Payee name cannot be empty."),
-#     ):
-#         update_payee_name_in_database(session, payee, "  ")
-
-
-# def test_update_payee_name_same_name(session):
-#     payee = add_payee_to_database(session, "Walmart")
-
-#     result = update_payee_name_in_database(session, payee, "Walmart")
-
-#     assert result is payee
-#     assert result.name == "Walmart"
-
-
-# def test_update_payee_name_duplicate(session):
-#     add_payee_to_database(session, "Walmart")
-#     gamestop = add_payee_to_database(session, "GameStop")
-
-#     with pytest.raises(ValueError, match=re.escape("Payee already exists: Walmart")):
-#         update_payee_name_in_database(session, gamestop, "Walmart")
-
-#     assert gamestop.name == "GameStop"
-
-
-# def test_update_payee_name_strips_name(session):
-#     payee = add_payee_to_database(session, "Walmart")
-
-#     session.flush()
-
-#     result = update_payee_name_in_database(session, payee, "  GameStop  ")
-
-#     assert result.name == "GameStop"
-
-#     session.commit()
-#     session.expire_all()
-
-#     stored_payee = get_payee_by_id_from_database(session, payee.payee_id)
-
-#     assert stored_payee is not None
-#     assert stored_payee.name == "GameStop"
-
-
-def test_delete_payee(session):
+def test_delete_payee(session: Session):
     payee = add_payee_to_database(session, "Walmart")
 
     session.flush()
