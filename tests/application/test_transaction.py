@@ -10,6 +10,7 @@ from meyno.application.transaction import (
     add_transaction_to_database,
     delete_split_from_transaction_in_database,
     delete_transaction_from_database,
+    get_all_transactions_from_database,
     get_split_by_id_from_database,
     get_transaction_by_id_from_database,
     update_split_amount_in_database,
@@ -21,6 +22,7 @@ from meyno.schemas.transaction import (
     TransactionSplitCreate,
     TransactionUpdate,
 )
+from meyno.utils import get_local_todays_date
 
 
 def test_add_transaction_to_database(session: Session):
@@ -58,6 +60,7 @@ def test_add_transaction_to_database(session: Session):
 
 def test_add_transaction_to_database_defaults(session: Session):
     account = add_account_to_database(session, "Checking")
+    today = get_local_todays_date()
 
     session.commit()
 
@@ -70,6 +73,7 @@ def test_add_transaction_to_database_defaults(session: Session):
     session.flush()
 
     assert transaction.date == transaction_data.date
+    assert transaction.date == today
     assert transaction.amount == 0
     assert transaction.payee_id is None
     assert transaction.notes is None
@@ -100,6 +104,29 @@ def test_get_transaction_by_id_not_found(session):
     result = get_transaction_by_id_from_database(session, 999)
 
     assert result is None
+
+
+def test_get_all_transactions_from_database(session: Session):
+    result = get_all_transactions_from_database(session)
+
+    assert len(result) == 0
+
+    account = add_account_to_database(session, "Checking")
+    session.commit()
+
+    dummy_create_data = TransactionCreate(account_id=account.account_id)
+
+    transaction_1 = add_transaction_to_database(session, dummy_create_data)
+    transaction_2 = add_transaction_to_database(session, dummy_create_data)
+
+    session.commit()
+    session.expire_all()
+
+    result = get_all_transactions_from_database(session)
+
+    assert len(result) == 2
+    assert result[0] is transaction_1
+    assert result[1] is transaction_2
 
 
 def test_update_transaction_in_database(session: Session):

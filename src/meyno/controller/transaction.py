@@ -23,9 +23,10 @@ from meyno.schemas.transaction import (
     TransactionSplitCreate,
     TransactionUpdate,
 )
+from meyno.utils import controller_read
 
 
-def create_transaction(
+def add_transaction(
     session: Session, transaction_data: TransactionCreate
 ) -> Transaction:
     with session.begin():
@@ -43,7 +44,7 @@ def create_transaction(
         return transaction
 
 
-def create_transfer(
+def add_transfer(
     session: Session, from_account: Account, to_account: Account, amount: int
 ) -> Transaction:
 
@@ -70,15 +71,20 @@ def create_transfer(
 
 
 def get_transaction_by_id(session: Session, transaction_id: int) -> Transaction | None:
-    return get_transaction_by_id_from_database(session, transaction_id)
+    with controller_read(session):
+        return get_transaction_by_id_from_database(session, transaction_id)
 
 
 def get_all_transactions(session: Session) -> list[Transaction]:
-    return get_all_transactions_from_database(session)
+    with controller_read(session):
+        return get_all_transactions_from_database(session)
 
 
-def get_all_transactions_for_account(account: Account) -> list[Transaction]:
-    return get_all_transactions_for_account_from_database(account)
+def get_all_transactions_for_account(
+    session: Session, account: Account
+) -> list[Transaction]:
+    with controller_read(session):
+        return get_all_transactions_for_account_from_database(account)
 
 
 def update_transaction(

@@ -11,7 +11,7 @@ from meyno.controller.category import (
     update_category_name,
 )
 from meyno.controller.transaction import (
-    create_transaction,
+    add_transaction,
     get_transaction_by_id,
 )
 from meyno.exceptions.category import (
@@ -173,7 +173,7 @@ def test_delete_category(session: Session):
     category = add_category(session, "Walmart")
     account = add_account(session, "Checking")
 
-    transaction = create_transaction(
+    transaction = add_transaction(
         session,
         TransactionCreate(
             account_id=account.account_id,

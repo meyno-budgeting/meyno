@@ -11,7 +11,7 @@ from meyno.controller.payee import (
     update_payee_name,
 )
 from meyno.controller.transaction import (
-    create_transaction,
+    add_transaction,
     get_transaction_by_id,
 )
 from meyno.exceptions.payee import (
@@ -173,7 +173,7 @@ def test_delete_payee(session: Session):
     payee = add_payee(session, "Walmart")
     account = add_account(session, "Checking")
 
-    transaction = create_transaction(
+    transaction = add_transaction(
         session,
         TransactionCreate(
             account_id=account.account_id, payee_id=payee.payee_id, amount=1000

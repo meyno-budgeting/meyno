@@ -10,8 +10,8 @@ from meyno.controller.account import (
     update_account_name,
 )
 from meyno.controller.transaction import (
-    create_transaction,
-    create_transfer,
+    add_transaction,
+    add_transfer,
     get_transaction_by_id,
 )
 from meyno.exceptions.account import (
@@ -172,7 +172,7 @@ def test_update_account_name_same_name(session: Session, name: str):
 def test_delete_account(session: Session):
     account = add_account(session, "Checking")
 
-    transaction = create_transaction(
+    transaction = add_transaction(
         session,
         TransactionCreate(account_id=account.account_id, amount=1000),
     )
@@ -192,7 +192,7 @@ def test_delete_account_preserves_incoming_transfer_transaction(
     checking = add_account(session, "Checking")
     savings = add_account(session, "Savings")
 
-    outgoing = create_transfer(session, checking, savings, 500)
+    outgoing = add_transfer(session, checking, savings, 500)
     incoming = outgoing.transfer_transaction
 
     incoming_transaction_id = incoming.transaction_id
@@ -213,7 +213,7 @@ def test_delete_account_preserves_outgoing_transfer_transaction(
     checking = add_account(session, "Checking")
     savings = add_account(session, "Savings")
 
-    outgoing = create_transfer(session, checking, savings, 500)
+    outgoing = add_transfer(session, checking, savings, 500)
 
     outgoing_transaction_id = outgoing.transaction_id
 
