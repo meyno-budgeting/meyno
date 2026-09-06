@@ -1,5 +1,4 @@
-from collections.abc import Generator
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Session
 
@@ -16,20 +15,10 @@ from meyno.exceptions.category import (
     CategoryNameEmptyError,
     CategoryNotFoundError,
 )
+from meyno.utils import controller_read
 
 if TYPE_CHECKING:
     from meyno.database.models import Category
-
-
-from contextlib import contextmanager
-
-
-@contextmanager
-def controller_read(session: Session) -> Generator[None, Any]:
-    try:
-        yield
-    finally:
-        session.rollback()
 
 
 def _check_category_exists(session: Session, category_name: str) -> None:

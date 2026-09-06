@@ -1,7 +1,3 @@
-from collections.abc import Generator
-from contextlib import contextmanager
-from typing import Any
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -13,21 +9,13 @@ from meyno.application.account import (
     get_all_accounts_from_database,
     update_account_name_in_database,
 )
-from meyno.controller.category import controller_read
 from meyno.database.models import Account, Transaction
 from meyno.exceptions.account import (
     AccountAlreadyExistsError,
     AccountNameEmptyError,
     AccountNotFoundError,
 )
-
-
-@contextmanager
-def read_transaction(session: Session) -> Generator[None, Any]:
-    try:
-        yield
-    finally:
-        session.rollback()
+from meyno.utils import controller_read
 
 
 def _check_account_exists(session: Session, account_name: str) -> None:
