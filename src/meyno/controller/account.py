@@ -1,3 +1,7 @@
+from collections.abc import Generator
+from contextlib import contextmanager
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,12 +13,21 @@ from meyno.application.account import (
     get_all_accounts_from_database,
     update_account_name_in_database,
 )
+from meyno.controller.category import controller_read
 from meyno.database.models import Account, Transaction
 from meyno.exceptions.account import (
     AccountAlreadyExistsError,
     AccountNameEmptyError,
     AccountNotFoundError,
 )
+
+
+@contextmanager
+def read_transaction(session: Session) -> Generator[None, Any]:
+    try:
+        yield
+    finally:
+        session.rollback()
 
 
 def _check_account_exists(session: Session, account_name: str) -> None:
@@ -44,27 +57,29 @@ def add_account(session: Session, name: str) -> Account:
 
 
 def get_account_by_id(session: Session, account_id: int) -> Account:
-    account = get_account_by_id_from_database(session, account_id)
+    with controller_read(session):
+        account = get_account_by_id_from_database(session, account_id)
 
-    if account is None:
-        raise AccountNotFoundError(account_id)
+        if account is None:
+            raise AccountNotFoundError(account_id)
 
-    return account
+        return account
 
 
 def get_account_by_name(session: Session, account_name: str) -> Account:
-    account_name = _validate_account_name(account_name)
+    with controller_read(session):
+        account_name = _validate_account_name(account_name)
 
-    account = get_account_by_name_from_database(session, account_name)
+        account = get_account_by_name_from_database(session, account_name)
 
-    if account is None:
-        raise AccountNotFoundError(account_name)
+        if account is None:
+            raise AccountNotFoundError(account_name)
 
-    return account
+        return account
 
 
 def get_all_accounts(session: Session) -> list[Account]:
-    with session.begin():
+    with controller_read(session):
         return get_all_accounts_from_database(session)
 
 

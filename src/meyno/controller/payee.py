@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING
+from collections.abc import Generator
+from contextlib import contextmanager
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.orm import Session
 
@@ -18,6 +20,14 @@ from meyno.exceptions.payee import (
 
 if TYPE_CHECKING:
     from meyno.database.models import Payee
+
+
+@contextmanager
+def controller_read(session: Session) -> Generator[None, Any]:
+    try:
+        yield
+    finally:
+        session.rollback()
 
 
 def _check_payee_exists(session: Session, payee_name: str) -> None:
@@ -47,27 +57,29 @@ def add_payee(session: Session, name: str) -> Payee:
 
 
 def get_payee_by_id(session: Session, payee_id: int) -> Payee:
-    payee = get_payee_by_id_from_database(session, payee_id)
+    with controller_read(session):
+        payee = get_payee_by_id_from_database(session, payee_id)
 
-    if payee is None:
-        raise PayeeNotFoundError(payee_id)
+        if payee is None:
+            raise PayeeNotFoundError(payee_id)
 
-    return payee
+        return payee
 
 
 def get_payee_by_name(session: Session, payee_name: str) -> Payee:
-    payee_name = _validate_payee_name(payee_name)
+    with controller_read(session):
+        payee_name = _validate_payee_name(payee_name)
 
-    payee = get_payee_by_name_from_database(session, payee_name)
+        payee = get_payee_by_name_from_database(session, payee_name)
 
-    if payee is None:
-        raise PayeeNotFoundError(payee_name)
+        if payee is None:
+            raise PayeeNotFoundError(payee_name)
 
-    return payee
+        return payee
 
 
 def get_all_payees(session: Session) -> list[Payee]:
-    with session.begin():
+    with controller_read(session):
         return get_all_payees_from_database(session)
 
 

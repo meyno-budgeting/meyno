@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.orm import Session
 
@@ -18,6 +19,17 @@ from meyno.exceptions.category import (
 
 if TYPE_CHECKING:
     from meyno.database.models import Category
+
+
+from contextlib import contextmanager
+
+
+@contextmanager
+def controller_read(session: Session) -> Generator[None, Any]:
+    try:
+        yield
+    finally:
+        session.rollback()
 
 
 def _check_category_exists(session: Session, category_name: str) -> None:
@@ -47,27 +59,29 @@ def add_category(session: Session, name: str) -> Category:
 
 
 def get_category_by_id(session: Session, category_id: int) -> Category:
-    category = get_category_by_id_from_database(session, category_id)
+    with controller_read(session):
+        category = get_category_by_id_from_database(session, category_id)
 
-    if category is None:
-        raise CategoryNotFoundError(category_id)
+        if category is None:
+            raise CategoryNotFoundError(category_id)
 
-    return category
+        return category
 
 
 def get_category_by_name(session: Session, category_name: str) -> Category:
-    category_name = _validate_category_name(category_name)
+    with controller_read(session):
+        category_name = _validate_category_name(category_name)
 
-    category = get_category_by_name_from_database(session, category_name)
+        category = get_category_by_name_from_database(session, category_name)
 
-    if category is None:
-        raise CategoryNotFoundError(category_name)
+        if category is None:
+            raise CategoryNotFoundError(category_name)
 
-    return category
+        return category
 
 
 def get_all_categories(session: Session) -> list[Category]:
-    with session.begin():
+    with controller_read(session):
         return get_all_categories_from_database(session)
 
 
