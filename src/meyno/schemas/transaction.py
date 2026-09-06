@@ -2,6 +2,8 @@ import datetime
 
 from pydantic import BaseModel, Field
 
+from meyno.utils import get_local_todays_date
+
 
 class TransactionSplitCreate(BaseModel):
     amount: int = 0
@@ -9,9 +11,7 @@ class TransactionSplitCreate(BaseModel):
 
 
 class TransactionCreate(BaseModel):
-    date: datetime.date = Field(
-        default_factory=lambda: datetime.datetime.now().astimezone().date()
-    )
+    date: datetime.date = Field(default_factory=get_local_todays_date)
     account_id: int
     amount: int = 0
     payee_id: int | None = None
