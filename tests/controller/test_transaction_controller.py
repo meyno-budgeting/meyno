@@ -7,14 +7,18 @@ from meyno.controller.account import add_account
 from meyno.controller.payee import add_payee
 from meyno.controller.transaction import (
     add_transaction,
+    add_transfer,
+    convert_transaction_to_transfer,
     get_all_transactions,
     get_transaction_by_id,
+    update_transaction,
 )
 from meyno.exceptions.transaction import InvalidTransactionError
 from meyno.schemas.transaction import (
     TransactionCreate,
     TransactionSplitCreate,
     TransactionUpdate,
+    TransferCreate,
 )
 from meyno.utils import get_local_todays_date
 
@@ -32,6 +36,8 @@ def test_add_transaction(session: Session):
     )
 
     transaction = add_transaction(session, transaction_data)
+
+    session.expire_all()
 
     stored_transaction = get_transaction_by_id(
         session,
@@ -57,6 +63,8 @@ def test_add_transaction_defaults(session: Session):
 
     transaction = add_transaction(session, default_transaction_data)
 
+    session.expire_all()
+
     assert transaction.date == default_transaction_data.date
     assert transaction.date == today
     assert transaction.amount == 0
@@ -76,10 +84,20 @@ def test_add_transaction_with_valid_splits(session: Session):
 
     transaction = add_transaction(session, transaction_data)
 
-    assert len(transaction.splits) == 2
-    assert transaction.splits[0].amount == 3000
-    assert transaction.splits[1].amount == 5000
-    assert sum(split.amount for split in transaction.splits)
+    session.expire_all()
+
+    stored_transaction = get_transaction_by_id(
+        session,
+        transaction.transaction_id,
+    )
+
+    assert len(stored_transaction.splits) == 2
+    assert stored_transaction.splits[0].amount == 3000
+    assert stored_transaction.splits[1].amount == 5000
+    assert (
+        sum(split.amount for split in stored_transaction.splits)
+        == stored_transaction.amount
+    )
 
 
 def test_add_transaction_invalid_empty_splits(session: Session):
@@ -122,6 +140,61 @@ def test_add_transaction_invalid_splits_amount(session: Session):
     transactions = get_all_transactions(session)
 
     assert len(transactions) == 0
+
+
+def test_add_transfer(session: Session):
+    checking = add_account(session, "Checking")
+    savings = add_account(session, "Savings")
+
+    transfer_data = TransferCreate(
+        outgoing_account_id=checking.account_id,
+        incoming_account_id=savings.account_id,
+        amount=500,
+    )
+
+    transfer = add_transfer(session, transfer_data)
+
+    session.expire_all()
+
+    stored_transaction = get_transaction_by_id(
+        session,
+        transfer.transaction_id,
+    )
+
+    assert stored_transaction is transfer
+    assert len(stored_transaction.splits) == 0
+    assert stored_transaction.account is checking
+    assert stored_transaction.amount == -500
+
+    assert stored_transaction.transfer_transaction is not None
+    assert len(stored_transaction.transfer_transaction.splits) == 0
+    assert stored_transaction.transfer_transaction.account is savings
+    assert stored_transaction.transfer_transaction.amount == 500
+
+
+def test_updating_transfer_with_splits(session: Session):
+    checking = add_account(session, "Checking")
+    savings = add_account(session, "Savings")
+
+    transfer_data = TransferCreate(
+        outgoing_account_id=checking.account_id,
+        incoming_account_id=savings.account_id,
+        amount=500,
+    )
+
+    transfer = add_transfer(session, transfer_data)
+
+    with pytest.raises(
+        InvalidTransactionError,
+        match="A transfer cannot have splits!",
+    ):
+        update_transaction(
+            session,
+            transfer,
+            TransactionUpdate(
+                splits=[TransactionSplitCreate(amount=-500)],
+            ),
+        )
 
 
 def test_get_transaction_by_id(session: Session):

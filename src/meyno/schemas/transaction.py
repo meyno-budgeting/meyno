@@ -19,6 +19,14 @@ class TransactionCreate(BaseModel):
     splits: list[TransactionSplitCreate] | None = None
 
 
+class TransferCreate(BaseModel):
+    date: datetime.date = Field(default_factory=get_local_todays_date)
+    outgoing_account_id: int
+    incoming_account_id: int
+    amount: int = 0
+    notes: str | None = None
+
+
 class TransactionUpdate(BaseModel):
     date: datetime.date | None = None
     account_id: int | None = None

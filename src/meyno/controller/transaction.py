@@ -22,6 +22,7 @@ from meyno.schemas.transaction import (
     TransactionCreate,
     TransactionSplitCreate,
     TransactionUpdate,
+    TransferCreate,
 )
 from meyno.utils import controller_read
 
@@ -46,28 +47,37 @@ def add_transaction(
         return transaction
 
 
-def add_transfer(
-    session: Session, from_account: Account, to_account: Account, amount: int
-) -> Transaction:
+def add_transfer(session: Session, transfer_data: TransferCreate) -> Transaction:
 
     with session.begin():
         outgoing = add_transaction_to_database(
             session,
             TransactionCreate(
-                account_id=from_account.account_id,
-                amount=-amount,
+                date=transfer_data.date,
+                account_id=transfer_data.outgoing_account_id,
+                amount=-transfer_data.amount,
+                splits=[],
+                notes=transfer_data.notes,
             ),
         )
 
         incoming = add_transaction_to_database(
             session,
             TransactionCreate(
-                account_id=to_account.account_id,
-                amount=amount,
+                date=transfer_data.date,
+                account_id=transfer_data.incoming_account_id,
+                amount=transfer_data.amount,
+                splits=[],
+                notes=transfer_data.notes,
             ),
         )
 
         outgoing.transfer_transaction = incoming
+
+        session.flush()
+
+        _validate_transaction(session, outgoing)
+        _validate_transaction(session, incoming)
 
         return outgoing
 
@@ -288,9 +298,7 @@ def _find_outgoing_side_of_transfer(
 def _validate_transaction(session: Session, transaction: Transaction) -> None:
     if len(transaction.splits) > 0:
         if transaction.transfer_transaction is not None:
-            raise InvalidTransactionError(
-                "A transaction with splits cannot be a transfer!"
-            )
+            raise InvalidTransactionError("A transfer cannot have splits!")
 
         if _get_split_amount_total(transaction) != transaction.amount:
             raise InvalidTransactionError(
