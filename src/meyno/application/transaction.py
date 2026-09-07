@@ -24,10 +24,13 @@ def get_all_transactions_from_database(session: Session) -> list[Transaction]:
 
 
 def get_all_transactions_for_account_from_database(
-    account: Account,
+    session: Session, account: Account
 ) -> list[Transaction]:
-
-    return list(account.transactions)
+    return list(
+        session.scalars(
+            select(Transaction).where(Transaction.account_id == account.account_id)
+        )
+    )
 
 
 def add_transaction_to_database(

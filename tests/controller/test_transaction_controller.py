@@ -10,10 +10,14 @@ from meyno.controller.transaction import (
     add_transfer,
     convert_transaction_to_transfer,
     get_all_transactions,
+    get_all_transactions_for_account,
     get_transaction_by_id,
     update_transaction,
 )
-from meyno.exceptions.transaction import InvalidTransactionError
+from meyno.exceptions.transaction import (
+    InvalidTransactionError,
+    InvalidTransferCreateError,
+)
 from meyno.schemas.transaction import (
     TransactionCreate,
     TransactionSplitCreate,
@@ -172,6 +176,20 @@ def test_add_transfer(session: Session):
     assert stored_transaction.transfer_transaction.amount == 500
 
 
+def test_add_transaction_same_account(session: Session):
+    checking = add_account(session, "Checking")
+
+    with pytest.raises(
+        InvalidTransferCreateError,
+        match="Outgoing and incoming accounts must be different",
+    ):
+        TransferCreate(
+            outgoing_account_id=checking.account_id,
+            incoming_account_id=checking.account_id,
+            amount=500,
+        )
+
+
 def test_updating_transfer_with_splits(session: Session):
     checking = add_account(session, "Checking")
     savings = add_account(session, "Savings")
@@ -213,3 +231,47 @@ def test_get_transaction_by_id(session: Session):
 
     assert stored_transaction is not None
     assert stored_transaction.transaction_id == transaction.transaction_id
+
+
+def test_get_all_transactions(session: Session):
+    result = get_all_transactions(session)
+
+    assert len(result) == 0
+
+    account = add_account(session, "Checking")
+
+    transaction_1 = add_transaction(
+        session, TransactionCreate(account_id=account.account_id)
+    )
+
+    transaction_2 = add_transaction(
+        session, TransactionCreate(account_id=account.account_id)
+    )
+
+    result = get_all_transactions(session)
+
+    assert len(result) == 2
+    assert result[0] is transaction_1
+    assert result[1] is transaction_2
+
+
+def test_get_all_transactions_for_account(session: Session):
+    account = add_account(session, "Checking")
+
+    result = get_all_transactions_for_account(session, account)
+
+    assert len(result) == 0
+
+    transaction_1 = add_transaction(
+        session, TransactionCreate(account_id=account.account_id)
+    )
+
+    transaction_2 = add_transaction(
+        session, TransactionCreate(account_id=account.account_id)
+    )
+
+    result = get_all_transactions_for_account(session, account)
+
+    assert len(result) == 2
+    assert result[0] is transaction_1
+    assert result[1] is transaction_2
