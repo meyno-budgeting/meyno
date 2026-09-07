@@ -1,7 +1,9 @@
 import datetime
+from typing import Self
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
+from meyno.exceptions.transaction import InvalidTransferCreateError
 from meyno.utils import get_local_todays_date
 
 
@@ -25,6 +27,15 @@ class TransferCreate(BaseModel):
     incoming_account_id: int
     amount: int = 0
     notes: str | None = None
+
+    @model_validator(mode="after")
+    def validate_accounts(self) -> Self:
+        if self.outgoing_account_id == self.incoming_account_id:
+            raise InvalidTransferCreateError(
+                "Outgoing and incoming accounts must be different"
+            )
+
+        return self
 
 
 class TransactionUpdate(BaseModel):
