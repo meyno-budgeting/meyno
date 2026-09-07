@@ -19,7 +19,7 @@ from meyno.exceptions.account import (
     AccountNameEmptyError,
     AccountNotFoundError,
 )
-from meyno.schemas.transaction import TransactionCreate
+from meyno.schemas.transaction import TransactionCreate, TransferCreate
 
 
 def test_add_account(session: Session):
@@ -192,7 +192,13 @@ def test_delete_account_preserves_incoming_transfer_transaction(
     checking = add_account(session, "Checking")
     savings = add_account(session, "Savings")
 
-    outgoing = add_transfer(session, checking, savings, 500)
+    transfer_data = TransferCreate(
+        outgoing_account_id=checking.account_id,
+        incoming_account_id=savings.account_id,
+        amount=500,
+    )
+
+    outgoing = add_transfer(session, transfer_data)
     incoming = outgoing.transfer_transaction
 
     incoming_transaction_id = incoming.transaction_id
@@ -213,7 +219,13 @@ def test_delete_account_preserves_outgoing_transfer_transaction(
     checking = add_account(session, "Checking")
     savings = add_account(session, "Savings")
 
-    outgoing = add_transfer(session, checking, savings, 500)
+    transfer_data = TransferCreate(
+        outgoing_account_id=checking.account_id,
+        incoming_account_id=savings.account_id,
+        amount=500,
+    )
+
+    outgoing = add_transfer(session, transfer_data)
 
     outgoing_transaction_id = outgoing.transaction_id
 
