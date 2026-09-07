@@ -15,7 +15,7 @@ from meyno.exceptions.category import (
     CategoryNameEmptyError,
     CategoryNotFoundError,
 )
-from meyno.utils import controller_read
+from meyno.utils import controller_write
 
 if TYPE_CHECKING:
     from meyno.database.models import Category
@@ -37,7 +37,7 @@ def _validate_category_name(name: str) -> str:
 
 
 def add_category(session: Session, name: str) -> Category:
-    with session.begin():
+    with controller_write(session):
         name = _validate_category_name(name)
 
         _check_category_exists(session, name)
@@ -48,36 +48,33 @@ def add_category(session: Session, name: str) -> Category:
 
 
 def get_category_by_id(session: Session, category_id: int) -> Category:
-    with controller_read(session):
-        category = get_category_by_id_from_database(session, category_id)
+    category = get_category_by_id_from_database(session, category_id)
 
-        if category is None:
-            raise CategoryNotFoundError(category_id)
+    if category is None:
+        raise CategoryNotFoundError(category_id)
 
-        return category
+    return category
 
 
 def get_category_by_name(session: Session, category_name: str) -> Category:
-    with controller_read(session):
-        category_name = _validate_category_name(category_name)
+    category_name = _validate_category_name(category_name)
 
-        category = get_category_by_name_from_database(session, category_name)
+    category = get_category_by_name_from_database(session, category_name)
 
-        if category is None:
-            raise CategoryNotFoundError(category_name)
+    if category is None:
+        raise CategoryNotFoundError(category_name)
 
-        return category
+    return category
 
 
 def get_all_categories(session: Session) -> list[Category]:
-    with controller_read(session):
-        return get_all_categories_from_database(session)
+    return get_all_categories_from_database(session)
 
 
 def update_category_name(
     session: Session, category: Category, new_name: str
 ) -> Category:
-    with session.begin():
+    with controller_write(session):
         new_name = _validate_category_name(new_name)
 
         if new_name == category.name:
@@ -91,5 +88,5 @@ def update_category_name(
 
 
 def delete_category(session: Session, category: Category) -> None:
-    with session.begin():
+    with controller_write(session):
         delete_category_from_database(session, category)

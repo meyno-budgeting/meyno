@@ -6,11 +6,13 @@ from sqlalchemy.orm import Session
 
 
 @contextmanager
-def controller_read(session: Session) -> Generator[None]:
+def controller_write(session: Session) -> Generator[None]:
     try:
         yield
-    finally:
+        session.commit()
+    except Exception:
         session.rollback()
+        raise
 
 
 def get_local_todays_date() -> datetime.date:

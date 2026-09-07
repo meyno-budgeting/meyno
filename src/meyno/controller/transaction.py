@@ -24,13 +24,13 @@ from meyno.schemas.transaction import (
     TransactionUpdate,
     TransferCreate,
 )
-from meyno.utils import controller_read
+from meyno.utils import controller_write
 
 
 def add_transaction(
     session: Session, transaction_data: TransactionCreate
 ) -> Transaction:
-    with session.begin():
+    with controller_write(session):
         transaction = add_transaction_to_database(session, transaction_data)
 
         session.flush()
@@ -49,7 +49,7 @@ def add_transaction(
 
 def add_transfer(session: Session, transfer_data: TransferCreate) -> Transaction:
 
-    with session.begin():
+    with controller_write(session):
         outgoing = add_transaction_to_database(
             session,
             TransactionCreate(
@@ -83,27 +83,25 @@ def add_transfer(session: Session, transfer_data: TransferCreate) -> Transaction
 
 
 def get_transaction_by_id(session: Session, transaction_id: int) -> Transaction | None:
-    with controller_read(session):
-        return get_transaction_by_id_from_database(session, transaction_id)
+    return get_transaction_by_id_from_database(session, transaction_id)
 
 
 def get_all_transactions(session: Session) -> list[Transaction]:
-    with controller_read(session):
-        return get_all_transactions_from_database(session)
+    return get_all_transactions_from_database(session)
 
 
 def get_all_transactions_for_account(
     session: Session, account: Account
 ) -> list[Transaction]:
-    with controller_read(session):
-        return get_all_transactions_for_account_from_database(account)
+
+    return get_all_transactions_for_account_from_database(session, account)
 
 
 def update_transaction(
     session: Session, transaction: Transaction, update: TransactionUpdate
 ) -> Transaction:
 
-    with session.begin():
+    with controller_write(session):
         if update.amount is not None:
             _update_transaction_amount(session, transaction, update.amount)
 
@@ -120,7 +118,7 @@ def delete_transaction(session: Session, transaction: Transaction) -> None:
     # Deleting a whole account will instead break the chain and delete all transactions
     # in the account, while keeping the other side in tact.
 
-    with session.begin():
+    with controller_write(session):
         # Check if transaction was part of a transfer
         if transaction.transfer_transaction is not None:
             # This transaction is the outgoing side.
@@ -150,7 +148,7 @@ def convert_transaction_to_transfer(
     session: Session, transaction: Transaction, transfer_account: Account
 ) -> Transaction:
 
-    with session.begin():
+    with controller_write(session):
         if transaction.transfer_transaction is not None:
             raise TransactionConversionError
 
@@ -180,7 +178,7 @@ def convert_transfer_to_transaction(
     session: Session, transaction: Transaction
 ) -> Transaction:
 
-    with session.begin():
+    with controller_write(session):
         if transaction.transfer_transaction is not None:
             # Input is the outgoing side of the transfer.
             other_side = transaction.transfer_transaction
@@ -222,7 +220,7 @@ def add_split_to_transaction(
     category: Category | None = None,
 ) -> TransactionSplit:
 
-    with session.begin():
+    with controller_write(session):
         split_data = TransactionSplitCreate(amount=amount)
 
         if category is not None:

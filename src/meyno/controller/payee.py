@@ -15,7 +15,7 @@ from meyno.exceptions.payee import (
     PayeeNameEmptyError,
     PayeeNotFoundError,
 )
-from meyno.utils import controller_read
+from meyno.utils import controller_write
 
 if TYPE_CHECKING:
     from meyno.database.models import Payee
@@ -37,7 +37,7 @@ def _validate_payee_name(name: str) -> str:
 
 
 def add_payee(session: Session, name: str) -> Payee:
-    with session.begin():
+    with controller_write(session):
         name = _validate_payee_name(name)
 
         _check_payee_exists(session, name)
@@ -48,34 +48,31 @@ def add_payee(session: Session, name: str) -> Payee:
 
 
 def get_payee_by_id(session: Session, payee_id: int) -> Payee:
-    with controller_read(session):
-        payee = get_payee_by_id_from_database(session, payee_id)
+    payee = get_payee_by_id_from_database(session, payee_id)
 
-        if payee is None:
-            raise PayeeNotFoundError(payee_id)
+    if payee is None:
+        raise PayeeNotFoundError(payee_id)
 
-        return payee
+    return payee
 
 
 def get_payee_by_name(session: Session, payee_name: str) -> Payee:
-    with controller_read(session):
-        payee_name = _validate_payee_name(payee_name)
+    payee_name = _validate_payee_name(payee_name)
 
-        payee = get_payee_by_name_from_database(session, payee_name)
+    payee = get_payee_by_name_from_database(session, payee_name)
 
-        if payee is None:
-            raise PayeeNotFoundError(payee_name)
+    if payee is None:
+        raise PayeeNotFoundError(payee_name)
 
-        return payee
+    return payee
 
 
 def get_all_payees(session: Session) -> list[Payee]:
-    with controller_read(session):
-        return get_all_payees_from_database(session)
+    return get_all_payees_from_database(session)
 
 
 def update_payee_name(session: Session, payee: Payee, new_name: str) -> Payee:
-    with session.begin():
+    with controller_write(session):
         new_name = _validate_payee_name(new_name)
 
         if new_name == payee.name:
@@ -89,5 +86,5 @@ def update_payee_name(session: Session, payee: Payee, new_name: str) -> Payee:
 
 
 def delete_payee(session: Session, payee: Payee) -> None:
-    with session.begin():
+    with controller_write(session):
         delete_payee_from_database(session, payee)

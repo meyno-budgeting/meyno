@@ -15,7 +15,7 @@ from meyno.exceptions.account import (
     AccountNameEmptyError,
     AccountNotFoundError,
 )
-from meyno.utils import controller_read
+from meyno.utils import controller_write
 
 
 def _check_account_exists(session: Session, account_name: str) -> None:
@@ -34,7 +34,7 @@ def _validate_account_name(name: str) -> str:
 
 
 def add_account(session: Session, name: str) -> Account:
-    with session.begin():
+    with controller_write(session):
         name = _validate_account_name(name)
 
         _check_account_exists(session, name)
@@ -45,34 +45,31 @@ def add_account(session: Session, name: str) -> Account:
 
 
 def get_account_by_id(session: Session, account_id: int) -> Account:
-    with controller_read(session):
-        account = get_account_by_id_from_database(session, account_id)
+    account = get_account_by_id_from_database(session, account_id)
 
-        if account is None:
-            raise AccountNotFoundError(account_id)
+    if account is None:
+        raise AccountNotFoundError(account_id)
 
-        return account
+    return account
 
 
 def get_account_by_name(session: Session, account_name: str) -> Account:
-    with controller_read(session):
-        account_name = _validate_account_name(account_name)
+    account_name = _validate_account_name(account_name)
 
-        account = get_account_by_name_from_database(session, account_name)
+    account = get_account_by_name_from_database(session, account_name)
 
-        if account is None:
-            raise AccountNotFoundError(account_name)
+    if account is None:
+        raise AccountNotFoundError(account_name)
 
-        return account
+    return account
 
 
 def get_all_accounts(session: Session) -> list[Account]:
-    with controller_read(session):
-        return get_all_accounts_from_database(session)
+    return get_all_accounts_from_database(session)
 
 
 def update_account_name(session: Session, account: Account, new_name: str) -> Account:
-    with session.begin():
+    with controller_write(session):
         new_name = _validate_account_name(new_name)
 
         if new_name == account.name:
@@ -91,7 +88,7 @@ def delete_account(session: Session, account: Account) -> None:
     # Deleting a whole account will instead break the chain and delete all transactions
     # in the account, while keeping the other side in tact.
 
-    with session.begin():
+    with controller_write(session):
         for transaction in account.transactions:
             # Transaction is the outgoing side.
             if transaction.transfer_transaction is not None:

@@ -28,3 +28,10 @@ class InvalidTransactionError(TransactionError):
 
     def __init__(self, message: str) -> None:
         super().__init__(message)
+
+
+class InvalidTransferCreateError(TransactionError):
+    """Raised when a TransferCreate has invalid data"""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
