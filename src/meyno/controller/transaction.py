@@ -32,6 +32,8 @@ def add_transaction(
     with session.begin():
         transaction = add_transaction_to_database(session, transaction_data)
 
+        session.flush()
+
         splits = transaction_data.splits
         if splits is None:
             splits = [TransactionSplitCreate(amount=transaction.amount)]

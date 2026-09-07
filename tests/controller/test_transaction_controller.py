@@ -1,10 +1,16 @@
 import datetime
 
+import pytest
 from sqlalchemy.orm import Session
 
 from meyno.controller.account import add_account
 from meyno.controller.payee import add_payee
-from meyno.controller.transaction import add_transaction, get_transaction_by_id
+from meyno.controller.transaction import (
+    add_transaction,
+    get_all_transactions,
+    get_transaction_by_id,
+)
+from meyno.exceptions.transaction import InvalidTransactionError
 from meyno.schemas.transaction import (
     TransactionCreate,
     TransactionSplitCreate,
@@ -60,7 +66,6 @@ def test_add_transaction_defaults(session: Session):
 
 def test_add_transaction_with_valid_splits(session: Session):
     account = add_account(session, "Checking")
-
     splits = [TransactionSplitCreate(amount=3000), TransactionSplitCreate(amount=5000)]
 
     transaction_data = TransactionCreate(
@@ -75,6 +80,48 @@ def test_add_transaction_with_valid_splits(session: Session):
     assert transaction.splits[0].amount == 3000
     assert transaction.splits[1].amount == 5000
     assert sum(split.amount for split in transaction.splits)
+
+
+def test_add_transaction_invalid_empty_splits(session: Session):
+    account = add_account(session, "Checking")
+    splits = []
+
+    transaction_data = TransactionCreate(
+        account_id=account.account_id,
+        amount=8000,
+        splits=splits,
+    )
+
+    with pytest.raises(
+        InvalidTransactionError,
+        match="Transaction is not part of a valid transfer!",
+    ):
+        add_transaction(session, transaction_data)
+
+    transactions = get_all_transactions(session)
+
+    assert len(transactions) == 0
+
+
+def test_add_transaction_invalid_splits_amount(session: Session):
+    account = add_account(session, "Checking")
+    splits = [TransactionSplitCreate(amount=1000), TransactionSplitCreate(amount=500)]
+
+    transaction_data = TransactionCreate(
+        account_id=account.account_id,
+        amount=8000,
+        splits=splits,
+    )
+
+    with pytest.raises(
+        InvalidTransactionError,
+        match="Splits total does not match Transaction amount!",
+    ):
+        add_transaction(session, transaction_data)
+
+    transactions = get_all_transactions(session)
+
+    assert len(transactions) == 0
 
 
 def test_get_transaction_by_id(session: Session):
