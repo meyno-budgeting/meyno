@@ -72,7 +72,7 @@ def add_transfer(session: Session, transfer_data: TransferCreate) -> Transaction
             ),
         )
 
-        outgoing.transfer_transaction = incoming
+        outgoing.transfer_points_to = incoming
 
         session.flush()
 
@@ -120,10 +120,10 @@ def delete_transaction(session: Session, transaction: Transaction) -> None:
 
     with controller_write(session):
         # Check if transaction was part of a transfer
-        if transaction.transfer_transaction is not None:
+        if transaction.transfer_points_to is not None:
             # This transaction is the outgoing side.
             outgoing = transaction
-            incoming = transaction.transfer_transaction
+            incoming = transaction.transfer_points_to
         else:
             # Check whether this transaction is the incoming side.
             outgoing = _find_outgoing_side_of_transfer(session, transaction)
@@ -137,7 +137,7 @@ def delete_transaction(session: Session, transaction: Transaction) -> None:
             incoming = transaction
 
         # Break the transfer relationship before deleting either transaction.
-        outgoing.transfer_transaction = None
+        outgoing.transfer_points_to = None
 
         # Delete both sides of the transfer.
         session.delete(outgoing)
@@ -149,7 +149,7 @@ def convert_transaction_to_transfer(
 ) -> Transaction:
 
     with controller_write(session):
-        if transaction.transfer_transaction is not None:
+        if transaction.transfer_points_to is not None:
             raise TransactionConversionError
 
         # Check if this not incoming side of a transfer
@@ -169,7 +169,7 @@ def convert_transaction_to_transfer(
         # Set splits to empty for input transaction
         update_transaction_in_database(transaction, TransactionUpdate(splits=[]))
 
-        transaction.transfer_transaction = transfer_transaction
+        transaction.transfer_points_to = transfer_transaction
 
         return transaction
 
@@ -179,12 +179,12 @@ def convert_transfer_to_transaction(
 ) -> Transaction:
 
     with controller_write(session):
-        if transaction.transfer_transaction is not None:
+        if transaction.transfer_points_to is not None:
             # Input is the outgoing side of the transfer.
-            other_side = transaction.transfer_transaction
+            other_side = transaction.transfer_points_to
 
             # Break the transfer relationship.
-            transaction.transfer_transaction = None
+            transaction.transfer_points_to = None
 
         else:
             # Input may be the incoming side of the transfer.
@@ -194,7 +194,7 @@ def convert_transfer_to_transaction(
                 raise TransferConversionError
 
             # Break the transfer relationship from the outgoing side.
-            other_side.transfer_transaction = None
+            other_side.transfer_points_to = None
 
         # Make the input transaction a normal transaction
         # by giving it a single uncategorized split.
@@ -251,10 +251,10 @@ def _update_transaction_amount(
     elif len(transaction.splits) == 0:
         # Transfer
         # Update other side of transaction
-        if transaction.transfer_transaction is not None:
+        if transaction.transfer_points_to is not None:
             # Input transaction is outgoing side
             update_transaction_in_database(
-                transaction.transfer_transaction,
+                transaction.transfer_points_to,
                 TransactionUpdate(amount=-1 * new_amount),
             )
         else:
@@ -295,7 +295,7 @@ def _find_outgoing_side_of_transfer(
 
 def _validate_transaction(session: Session, transaction: Transaction) -> None:
     if len(transaction.splits) > 0:
-        if transaction.transfer_transaction is not None:
+        if transaction.transfer_points_to is not None:
             raise InvalidTransactionError("A transfer cannot have splits!")
 
         if _get_split_amount_total(transaction) != transaction.amount:
@@ -306,8 +306,8 @@ def _validate_transaction(session: Session, transaction: Transaction) -> None:
         return
 
     # No splits means this must be a transfer.
-    if transaction.transfer_transaction is not None:
-        other_side = transaction.transfer_transaction
+    if transaction.transfer_points_to is not None:
+        other_side = transaction.transfer_points_to
     else:
         other_side = _find_outgoing_side_of_transfer(session, transaction)
 

@@ -170,13 +170,13 @@ def test_add_transfer(session: Session):
     assert stored_transaction.account is checking
     assert stored_transaction.amount == -500
 
-    assert stored_transaction.transfer_transaction is not None
-    assert len(stored_transaction.transfer_transaction.splits) == 0
-    assert stored_transaction.transfer_transaction.account is savings
-    assert stored_transaction.transfer_transaction.amount == 500
+    assert stored_transaction.transfer_points_to is not None
+    assert len(stored_transaction.transfer_points_to.splits) == 0
+    assert stored_transaction.transfer_points_to.account is savings
+    assert stored_transaction.transfer_points_to.amount == 500
 
 
-def test_add_transaction_same_account(session: Session):
+def test_add_transfer_same_account(session: Session):
     checking = add_account(session, "Checking")
 
     with pytest.raises(

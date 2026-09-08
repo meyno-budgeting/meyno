@@ -270,7 +270,7 @@ def test_transfer_transaction(session):
         notes="Moving some savings over",
     )
 
-    outgoing_transaction.transfer_transaction = incoming_transaction
+    outgoing_transaction.transfer_points_to = incoming_transaction
 
     session.add_all([outgoing_transaction, incoming_transaction])
     session.commit()

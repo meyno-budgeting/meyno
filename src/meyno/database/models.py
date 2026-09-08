@@ -93,9 +93,18 @@ class Transaction(Base):
         cascade="all, delete-orphan",
     )
 
-    transfer_transaction: Mapped[Transaction | None] = relationship(
+    transfer_points_to: Mapped[Transaction | None] = relationship(
         remote_side="Transaction.transaction_id",
         foreign_keys=[transfer_transaction_id],
+    )
+
+    transfer_pointed_from: Mapped[Transaction | None] = relationship(
+        "Transaction",
+        primaryjoin=(
+            "Transaction.transaction_id == foreign(Transaction.transfer_transaction_id)"
+        ),
+        viewonly=True,
+        uselist=False,
     )
 
     __table_args__ = (
@@ -104,6 +113,13 @@ class Transaction(Base):
             name="ck_transaction_transfer_not_self",
         ),
     )
+
+    @property
+    def transfer_other_side(self) -> Transaction | None:
+        if self.transfer_points_to is not None:
+            return self.transfer_points_to
+
+        return self.transfer_pointed_from
 
     def __repr__(self) -> str:
         return (

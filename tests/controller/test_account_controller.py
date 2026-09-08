@@ -199,7 +199,7 @@ def test_delete_account_preserves_incoming_transfer_transaction(
     )
 
     outgoing = add_transfer(session, transfer_data)
-    incoming = outgoing.transfer_transaction
+    incoming = outgoing.transfer_points_to
 
     incoming_transaction_id = incoming.transaction_id
 
@@ -210,7 +210,7 @@ def test_delete_account_preserves_incoming_transfer_transaction(
     stored_savings_transaction = get_transaction_by_id(session, incoming_transaction_id)
 
     assert stored_savings_transaction is not None
-    assert stored_savings_transaction.transfer_transaction is None
+    assert stored_savings_transaction.transfer_points_to is None
 
 
 def test_delete_account_preserves_outgoing_transfer_transaction(
@@ -236,4 +236,4 @@ def test_delete_account_preserves_outgoing_transfer_transaction(
     )
 
     assert stored_checking_transaction is not None
-    assert stored_checking_transaction.transfer_transaction is None
+    assert stored_checking_transaction.transfer_points_to is None
