@@ -285,7 +285,11 @@ def test_transfer_transaction(session):
     assert queried_outgoing.transfer_transaction_id == queried_incoming.transaction_id
     assert queried_incoming.transfer_transaction_id is None
 
-    assert queried_outgoing.transfer_transaction is queried_incoming
+    assert queried_outgoing.transfer_points_to is queried_incoming
+    assert queried_incoming.transfer_pointed_from is queried_outgoing
+
+    assert queried_outgoing.transfer_other_side is queried_incoming
+    assert queried_incoming.transfer_other_side is queried_outgoing
 
     assert queried_incoming.payee_id == queried_outgoing.payee_id
     assert queried_outgoing.payee.name == "Chase"

@@ -1,4 +1,5 @@
-from sqlalchemy import select
+from typing import TYPE_CHECKING
+
 from sqlalchemy.orm import Session
 
 from meyno.application.transaction import (
@@ -11,7 +12,6 @@ from meyno.application.transaction import (
     update_split_amount_in_database,
     update_transaction_in_database,
 )
-from meyno.database.models import Account, Category, Transaction, TransactionSplit
 from meyno.exceptions.transaction import (
     InvalidTransactionError,
     TransactionConversionError,
@@ -25,6 +25,9 @@ from meyno.schemas.transaction import (
     TransferCreate,
 )
 from meyno.utils import controller_write
+
+if TYPE_CHECKING:
+    from meyno.database.models import Account, Category, Transaction, TransactionSplit
 
 
 def add_transaction(
@@ -42,13 +45,12 @@ def add_transaction(
         for split_data in splits:
             add_split_to_transaction_in_database(session, transaction, split_data)
 
-        _validate_transaction(session, transaction)
+        _validate_transaction(transaction)
 
         return transaction
 
 
 def add_transfer(session: Session, transfer_data: TransferCreate) -> Transaction:
-
     with controller_write(session):
         outgoing = add_transaction_to_database(
             session,
@@ -76,8 +78,8 @@ def add_transfer(session: Session, transfer_data: TransferCreate) -> Transaction
 
         session.flush()
 
-        _validate_transaction(session, outgoing)
-        _validate_transaction(session, incoming)
+        _validate_transaction(outgoing)
+        _validate_transaction(incoming)
 
         return outgoing
 
@@ -107,7 +109,7 @@ def update_transaction(
 
         update_transaction_in_database(transaction, update)
 
-        _validate_transaction(session, transaction)
+        _validate_transaction(transaction)
 
         return transaction
 
@@ -119,29 +121,22 @@ def delete_transaction(session: Session, transaction: Transaction) -> None:
     # in the account, while keeping the other side in tact.
 
     with controller_write(session):
-        # Check if transaction was part of a transfer
+        other_side = transaction.transfer_other_side
+
+        if other_side is None:
+            # This transaction is not part of a transfer.
+            session.delete(transaction)
+            return
+
+        # Break the transfer relationship from whichever side owns it.
         if transaction.transfer_points_to is not None:
-            # This transaction is the outgoing side.
-            outgoing = transaction
-            incoming = transaction.transfer_points_to
+            transaction.transfer_points_to = None
         else:
-            # Check whether this transaction is the incoming side.
-            outgoing = _find_outgoing_side_of_transfer(session, transaction)
-
-            if outgoing is None:
-                # This transaction is not part of a transfer.
-                session.delete(transaction)
-                return
-
-            # This transaction is the incoming side.
-            incoming = transaction
-
-        # Break the transfer relationship before deleting either transaction.
-        outgoing.transfer_points_to = None
+            other_side.transfer_points_to = None
 
         # Delete both sides of the transfer.
-        session.delete(outgoing)
-        session.delete(incoming)
+        session.delete(transaction)
+        session.delete(other_side)
 
 
 def convert_transaction_to_transfer(
@@ -149,27 +144,34 @@ def convert_transaction_to_transfer(
 ) -> Transaction:
 
     with controller_write(session):
-        if transaction.transfer_points_to is not None:
-            raise TransactionConversionError
-
-        # Check if this not incoming side of a transfer
-        outgoing = _find_outgoing_side_of_transfer(session, transaction)
-
-        if outgoing is not None:
+        if transaction.transfer_other_side is not None:
             raise TransactionConversionError
 
         # Create a transaction in other account with opposite amount
         transfer_transaction = add_transaction_to_database(
             session,
             TransactionCreate(
-                account_id=transfer_account.account_id, amount=-1 * transaction.amount
+                account_id=transfer_account.account_id,
+                amount=-1 * transaction.amount,
             ),
         )
 
         # Set splits to empty for input transaction
-        update_transaction_in_database(transaction, TransactionUpdate(splits=[]))
+        update_transaction_in_database(
+            transaction,
+            TransactionUpdate(splits=[]),
+        )
+
+        # Set splits to empty for input transaction
+        update_transaction_in_database(
+            transfer_transaction,
+            TransactionUpdate(splits=[]),
+        )
 
         transaction.transfer_points_to = transfer_transaction
+
+        _validate_transaction(transaction)
+        _validate_transaction(transfer_transaction)
 
         return transaction
 
@@ -179,21 +181,15 @@ def convert_transfer_to_transaction(
 ) -> Transaction:
 
     with controller_write(session):
+        other_side = transaction.transfer_other_side
+
+        if other_side is None:
+            raise TransferConversionError
+
+        # Break the transfer relationship from whichever side owns it.
         if transaction.transfer_points_to is not None:
-            # Input is the outgoing side of the transfer.
-            other_side = transaction.transfer_points_to
-
-            # Break the transfer relationship.
             transaction.transfer_points_to = None
-
         else:
-            # Input may be the incoming side of the transfer.
-            other_side = _find_outgoing_side_of_transfer(session, transaction)
-
-            if other_side is None:
-                raise TransferConversionError
-
-            # Break the transfer relationship from the outgoing side.
             other_side.transfer_points_to = None
 
         # Make the input transaction a normal transaction
@@ -209,6 +205,8 @@ def convert_transfer_to_transaction(
 
         # Delete the other side of the transfer.
         delete_transaction_from_database(session, other_side)
+
+        _validate_transaction(transaction)
 
         return transaction
 
@@ -237,6 +235,7 @@ def _update_transaction_amount(
         # "Normal" non-transfer transaction
         # Update the only split amount as well
         update_split_amount_in_database(transaction.splits[0], new_amount)
+
     elif len(transaction.splits) > 1:
         split_total = _get_split_amount_total(transaction)
 
@@ -248,28 +247,19 @@ def _update_transaction_amount(
                 transaction,
                 TransactionSplitCreate(amount=diff, category_id=None),
             )
+
     elif len(transaction.splits) == 0:
         # Transfer
         # Update other side of transaction
-        if transaction.transfer_points_to is not None:
-            # Input transaction is outgoing side
-            update_transaction_in_database(
-                transaction.transfer_points_to,
-                TransactionUpdate(amount=-1 * new_amount),
-            )
-        else:
-            # Input transaction is incoming side
-            # Find outgoing side
-            outgoing = _find_outgoing_side_of_transfer(session, transaction)
+        other_side = transaction.transfer_other_side
 
-            if outgoing is None:
-                raise TransactionNotFoundError(
-                    "Could not find outgoing side of transfer"
-                )
+        if other_side is None:
+            raise TransactionNotFoundError("Could not find other side of transfer")
 
-            update_transaction_in_database(
-                outgoing, TransactionUpdate(amount=-1 * new_amount)
-            )
+        update_transaction_in_database(
+            other_side,
+            TransactionUpdate(amount=-1 * new_amount),
+        )
 
 
 def _get_split_amount_total(transaction: Transaction) -> int:
@@ -280,20 +270,7 @@ def _get_split_amount_total(transaction: Transaction) -> int:
     return total
 
 
-def _find_outgoing_side_of_transfer(
-    session: Session, transaction: Transaction
-) -> Transaction | None:
-
-    outgoing = session.scalars(
-        select(Transaction).where(
-            Transaction.transfer_transaction_id == transaction.transaction_id
-        )
-    ).first()
-
-    return outgoing
-
-
-def _validate_transaction(session: Session, transaction: Transaction) -> None:
+def _validate_transaction(transaction: Transaction) -> None:
     if len(transaction.splits) > 0:
         if transaction.transfer_points_to is not None:
             raise InvalidTransactionError("A transfer cannot have splits!")
@@ -306,10 +283,7 @@ def _validate_transaction(session: Session, transaction: Transaction) -> None:
         return
 
     # No splits means this must be a transfer.
-    if transaction.transfer_points_to is not None:
-        other_side = transaction.transfer_points_to
-    else:
-        other_side = _find_outgoing_side_of_transfer(session, transaction)
+    other_side = transaction.transfer_other_side
 
     if other_side is None:
         raise InvalidTransactionError("Transaction is not part of a valid transfer!")
