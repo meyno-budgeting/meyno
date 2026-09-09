@@ -91,8 +91,8 @@ def delete_account(session: Session, account: Account) -> None:
     with controller_write(session):
         for transaction in account.transactions:
             # Transaction is the outgoing side.
-            if transaction.transfer_points_to is not None:
-                transaction.transfer_points_to = None
+            if transaction.transfer_right_side is not None:
+                transaction.transfer_right_side = None
 
             # Transaction may be the incoming side.
             else:
@@ -104,6 +104,6 @@ def delete_account(session: Session, account: Account) -> None:
                 ).first()
 
                 if outgoing is not None:
-                    outgoing.transfer_points_to = None
+                    outgoing.transfer_right_side = None
 
         delete_account_from_database(session, account)

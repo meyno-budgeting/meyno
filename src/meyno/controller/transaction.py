@@ -52,36 +52,36 @@ def add_transaction(
 
 def add_transfer(session: Session, transfer_data: TransferCreate) -> Transaction:
     with controller_write(session):
-        outgoing = add_transaction_to_database(
+        left_side = add_transaction_to_database(
             session,
             TransactionCreate(
                 date=transfer_data.date,
-                account_id=transfer_data.outgoing_account_id,
+                account_id=transfer_data.left_side_account_id,
                 amount=-transfer_data.amount,
                 splits=[],
                 notes=transfer_data.notes,
             ),
         )
 
-        incoming = add_transaction_to_database(
+        right_side = add_transaction_to_database(
             session,
             TransactionCreate(
                 date=transfer_data.date,
-                account_id=transfer_data.incoming_account_id,
+                account_id=transfer_data.right_side_account_id,
                 amount=transfer_data.amount,
                 splits=[],
                 notes=transfer_data.notes,
             ),
         )
 
-        outgoing.transfer_points_to = incoming
+        left_side.transfer_right_side = right_side
 
         session.flush()
 
-        _validate_transaction(outgoing)
-        _validate_transaction(incoming)
+        _validate_transaction(left_side)
+        _validate_transaction(right_side)
 
-        return outgoing
+        return left_side
 
 
 def get_transaction_by_id(session: Session, transaction_id: int) -> Transaction | None:
@@ -129,10 +129,10 @@ def delete_transaction(session: Session, transaction: Transaction) -> None:
             return
 
         # Break the transfer relationship from whichever side owns it.
-        if transaction.transfer_points_to is not None:
-            transaction.transfer_points_to = None
+        if transaction.transfer_right_side is not None:
+            transaction.transfer_right_side = None
         else:
-            other_side.transfer_points_to = None
+            other_side.transfer_right_side = None
 
         # Delete both sides of the transfer.
         session.delete(transaction)
@@ -168,7 +168,7 @@ def convert_transaction_to_transfer(
             TransactionUpdate(splits=[]),
         )
 
-        transaction.transfer_points_to = transfer_transaction
+        transaction.transfer_right_side = transfer_transaction
 
         _validate_transaction(transaction)
         _validate_transaction(transfer_transaction)
@@ -187,10 +187,10 @@ def convert_transfer_to_transaction(
             raise TransferConversionError
 
         # Break the transfer relationship from whichever side owns it.
-        if transaction.transfer_points_to is not None:
-            transaction.transfer_points_to = None
+        if transaction.transfer_right_side is not None:
+            transaction.transfer_right_side = None
         else:
-            other_side.transfer_points_to = None
+            other_side.transfer_right_side = None
 
         # Make the input transaction a normal transaction
         # by giving it a single uncategorized split.
@@ -272,7 +272,7 @@ def _get_split_amount_total(transaction: Transaction) -> int:
 
 def _validate_transaction(transaction: Transaction) -> None:
     if len(transaction.splits) > 0:
-        if transaction.transfer_points_to is not None:
+        if transaction.transfer_right_side is not None:
             raise InvalidTransactionError("A transfer cannot have splits!")
 
         if _get_split_amount_total(transaction) != transaction.amount:

@@ -151,8 +151,8 @@ def test_add_transfer(session: Session):
     savings = add_account(session, "Savings")
 
     transfer_data = TransferCreate(
-        outgoing_account_id=checking.account_id,
-        incoming_account_id=savings.account_id,
+        left_side_account_id=checking.account_id,
+        right_side_account_id=savings.account_id,
         amount=500,
     )
 
@@ -170,10 +170,10 @@ def test_add_transfer(session: Session):
     assert stored_transaction.account is checking
     assert stored_transaction.amount == -500
 
-    assert stored_transaction.transfer_points_to is not None
-    assert len(stored_transaction.transfer_points_to.splits) == 0
-    assert stored_transaction.transfer_points_to.account is savings
-    assert stored_transaction.transfer_points_to.amount == 500
+    assert stored_transaction.transfer_right_side is not None
+    assert len(stored_transaction.transfer_right_side.splits) == 0
+    assert stored_transaction.transfer_right_side.account is savings
+    assert stored_transaction.transfer_right_side.amount == 500
 
 
 def test_add_transfer_same_account(session: Session):
@@ -184,34 +184,9 @@ def test_add_transfer_same_account(session: Session):
         match="Outgoing and incoming accounts must be different",
     ):
         TransferCreate(
-            outgoing_account_id=checking.account_id,
-            incoming_account_id=checking.account_id,
+            left_side_account_id=checking.account_id,
+            right_side_account_id=checking.account_id,
             amount=500,
-        )
-
-
-def test_updating_transfer_with_splits(session: Session):
-    checking = add_account(session, "Checking")
-    savings = add_account(session, "Savings")
-
-    transfer_data = TransferCreate(
-        outgoing_account_id=checking.account_id,
-        incoming_account_id=savings.account_id,
-        amount=500,
-    )
-
-    transfer = add_transfer(session, transfer_data)
-
-    with pytest.raises(
-        InvalidTransactionError,
-        match="A transfer cannot have splits!",
-    ):
-        update_transaction(
-            session,
-            transfer,
-            TransactionUpdate(
-                splits=[TransactionSplitCreate(amount=-500)],
-            ),
         )
 
 
@@ -275,3 +250,144 @@ def test_get_all_transactions_for_account(session: Session):
     assert len(result) == 2
     assert result[0] is transaction_1
     assert result[1] is transaction_2
+
+
+def test_updating_transfer_with_splits(session: Session):
+    checking = add_account(session, "Checking")
+    savings = add_account(session, "Savings")
+
+    transfer_data = TransferCreate(
+        left_side_account_id=checking.account_id,
+        right_side_account_id=savings.account_id,
+        amount=500,
+    )
+
+    transfer = add_transfer(session, transfer_data)
+
+    with pytest.raises(
+        InvalidTransactionError,
+        match="A transfer cannot have splits!",
+    ):
+        update_transaction(
+            session,
+            transfer,
+            TransactionUpdate(
+                splits=[TransactionSplitCreate(amount=-500)],
+            ),
+        )
+
+
+def test_update_transaction(session: Session):
+    account = add_account(session, "Checking")
+
+    transaction = add_transaction(
+        session,
+        TransactionCreate(
+            account_id=account.account_id,
+            amount=1000,
+            notes="Original",
+        ),
+    )
+
+    update = TransactionUpdate(
+        notes="Updated",
+        date=datetime.date(2026, 1, 15),
+    )
+
+    result = update_transaction(session, transaction, update)
+
+    assert result is transaction
+    assert transaction.notes == "Updated"
+    assert transaction.date == datetime.date(2026, 1, 15)
+    assert transaction.amount == 1000
+
+
+def test_update_transaction_amount_single_split(session: Session):
+    account = add_account(session, "Checking")
+
+    transaction = add_transaction(
+        session,
+        TransactionCreate(
+            account_id=account.account_id,
+            amount=1000,
+        ),
+    )
+
+    update_transaction(
+        session,
+        transaction,
+        TransactionUpdate(amount=1500),
+    )
+
+    assert transaction.amount == 1500
+    assert len(transaction.splits) == 1
+    assert transaction.splits[0].amount == 1500
+
+
+def test_update_transaction_amount_multiple_splits_increasing(session: Session):
+    account = add_account(session, "Checking")
+
+    transaction = add_transaction(
+        session,
+        TransactionCreate(
+            account_id=account.account_id,
+            amount=100,
+            splits=[
+                TransactionSplitCreate(amount=60),
+                TransactionSplitCreate(amount=40),
+            ],
+        ),
+    )
+
+    update_transaction(
+        session,
+        transaction,
+        TransactionUpdate(amount=125),
+    )
+
+    assert transaction.amount == 125
+    assert [split.amount for split in transaction.splits] == [60, 40, 25]
+
+
+def test_update_transaction_amount_multiple_splits_decreasing(session: Session):
+    account = add_account(session, "Checking")
+
+    transaction = add_transaction(
+        session,
+        TransactionCreate(
+            account_id=account.account_id,
+            amount=100,
+            splits=[
+                TransactionSplitCreate(amount=60),
+                TransactionSplitCreate(amount=40),
+            ],
+        ),
+    )
+
+    update_transaction(
+        session,
+        transaction,
+        TransactionUpdate(amount=75),
+    )
+
+    assert transaction.amount == 75
+    assert [split.amount for split in transaction.splits] == [60, 40, -25]
+
+
+# TODO(ChaoticDefense): Finish this test
+def test_update_transfer_amount(session: Session):
+    checking = add_account(session, "Checking")
+    savings = add_account(session, "Savings")
+    old_amount = 1000
+    new_amount = 2000
+
+    left_side = add_transfer(
+        session,
+        TransferCreate(
+            left_side_account_id=checking.account_id,
+            right_side_account_id=savings.account_id,
+            amount=old_amount,
+        ),
+    )
+
+    update_transaction(session, left_side, TransactionUpdate(amount=new_amount))

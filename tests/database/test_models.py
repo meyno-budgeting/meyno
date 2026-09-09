@@ -270,33 +270,35 @@ def test_transfer_transaction(session):
         notes="Moving some savings over",
     )
 
-    outgoing_transaction.transfer_points_to = incoming_transaction
+    outgoing_transaction.transfer_right_side = incoming_transaction
 
     session.add_all([outgoing_transaction, incoming_transaction])
     session.commit()
     session.expire_all()
 
-    queried_outgoing = session.get(Transaction, outgoing_transaction.transaction_id)
-    queried_incoming = session.get(Transaction, incoming_transaction.transaction_id)
+    queried_left_side = session.get(Transaction, outgoing_transaction.transaction_id)
+    queried_right_side = session.get(Transaction, incoming_transaction.transaction_id)
 
-    assert queried_outgoing is not None
-    assert queried_incoming is not None
+    assert queried_left_side is not None
+    assert queried_right_side is not None
 
-    assert queried_outgoing.transfer_transaction_id == queried_incoming.transaction_id
-    assert queried_incoming.transfer_transaction_id is None
+    assert (
+        queried_left_side.transfer_transaction_id == queried_right_side.transaction_id
+    )
+    assert queried_right_side.transfer_transaction_id is None
 
-    assert queried_outgoing.transfer_points_to is queried_incoming
-    assert queried_incoming.transfer_pointed_from is queried_outgoing
+    assert queried_left_side.transfer_right_side is queried_right_side
+    assert queried_right_side.transfer_left_side is queried_left_side
 
-    assert queried_outgoing.transfer_other_side is queried_incoming
-    assert queried_incoming.transfer_other_side is queried_outgoing
+    assert queried_left_side.transfer_other_side is queried_right_side
+    assert queried_right_side.transfer_other_side is queried_left_side
 
-    assert queried_incoming.payee_id == queried_outgoing.payee_id
-    assert queried_outgoing.payee.name == "Chase"
-    assert queried_incoming.payee.name == "Chase"
+    assert queried_right_side.payee_id == queried_left_side.payee_id
+    assert queried_left_side.payee.name == "Chase"
+    assert queried_right_side.payee.name == "Chase"
 
-    assert queried_outgoing.amount == -10000
-    assert queried_incoming.amount == 10000
+    assert queried_left_side.amount == -10000
+    assert queried_right_side.amount == 10000
 
 
 def test_transaction_cannot_transfer_to_itself(session):

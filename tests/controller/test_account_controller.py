@@ -193,13 +193,13 @@ def test_delete_account_preserves_incoming_transfer_transaction(
     savings = add_account(session, "Savings")
 
     transfer_data = TransferCreate(
-        outgoing_account_id=checking.account_id,
-        incoming_account_id=savings.account_id,
+        left_side_account_id=checking.account_id,
+        right_side_account_id=savings.account_id,
         amount=500,
     )
 
     outgoing = add_transfer(session, transfer_data)
-    incoming = outgoing.transfer_points_to
+    incoming = outgoing.transfer_right_side
 
     incoming_transaction_id = incoming.transaction_id
 
@@ -210,7 +210,7 @@ def test_delete_account_preserves_incoming_transfer_transaction(
     stored_savings_transaction = get_transaction_by_id(session, incoming_transaction_id)
 
     assert stored_savings_transaction is not None
-    assert stored_savings_transaction.transfer_points_to is None
+    assert stored_savings_transaction.transfer_right_side is None
 
 
 def test_delete_account_preserves_outgoing_transfer_transaction(
@@ -220,8 +220,8 @@ def test_delete_account_preserves_outgoing_transfer_transaction(
     savings = add_account(session, "Savings")
 
     transfer_data = TransferCreate(
-        outgoing_account_id=checking.account_id,
-        incoming_account_id=savings.account_id,
+        left_side_account_id=checking.account_id,
+        right_side_account_id=savings.account_id,
         amount=500,
     )
 
@@ -236,4 +236,4 @@ def test_delete_account_preserves_outgoing_transfer_transaction(
     )
 
     assert stored_checking_transaction is not None
-    assert stored_checking_transaction.transfer_points_to is None
+    assert stored_checking_transaction.transfer_right_side is None

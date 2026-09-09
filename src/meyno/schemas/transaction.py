@@ -23,14 +23,14 @@ class TransactionCreate(BaseModel):
 
 class TransferCreate(BaseModel):
     date: datetime.date = Field(default_factory=get_local_todays_date)
-    outgoing_account_id: int
-    incoming_account_id: int
+    left_side_account_id: int
+    right_side_account_id: int
     amount: int = 0
     notes: str | None = None
 
     @model_validator(mode="after")
     def validate_accounts(self) -> Self:
-        if self.outgoing_account_id == self.incoming_account_id:
+        if self.left_side_account_id == self.right_side_account_id:
             raise InvalidTransferCreateError(
                 "Outgoing and incoming accounts must be different"
             )
