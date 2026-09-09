@@ -9,6 +9,7 @@ from meyno.controller.transaction import (
     add_transaction,
     add_transfer,
     convert_transaction_to_transfer,
+    delete_transaction,
     get_all_transactions,
     get_all_transactions_for_account,
     get_transaction_by_id,
@@ -17,6 +18,7 @@ from meyno.controller.transaction import (
 from meyno.exceptions.transaction import (
     InvalidTransactionError,
     InvalidTransferCreateError,
+    TransactionNotFoundError,
 )
 from meyno.schemas.transaction import (
     TransactionCreate,
@@ -168,12 +170,12 @@ def test_add_transfer(session: Session):
     assert stored_transaction is transfer
     assert len(stored_transaction.splits) == 0
     assert stored_transaction.account is checking
-    assert stored_transaction.amount == -500
+    assert stored_transaction.amount == 500
 
     assert stored_transaction.transfer_right_side is not None
     assert len(stored_transaction.transfer_right_side.splits) == 0
     assert stored_transaction.transfer_right_side.account is savings
-    assert stored_transaction.transfer_right_side.amount == 500
+    assert stored_transaction.transfer_right_side.amount == -500
 
 
 def test_add_transfer_same_account(session: Session):
@@ -374,8 +376,7 @@ def test_update_transaction_amount_multiple_splits_decreasing(session: Session):
     assert [split.amount for split in transaction.splits] == [60, 40, -25]
 
 
-# TODO(ChaoticDefense): Finish this test
-def test_update_transfer_amount(session: Session):
+def test_update_transfer_left_side_amount(session: Session):
     checking = add_account(session, "Checking")
     savings = add_account(session, "Savings")
     old_amount = 1000
@@ -390,4 +391,111 @@ def test_update_transfer_amount(session: Session):
         ),
     )
 
-    update_transaction(session, left_side, TransactionUpdate(amount=new_amount))
+    update_transaction(
+        session,
+        left_side,
+        TransactionUpdate(amount=new_amount),
+    )
+
+    assert left_side.amount == 2000
+    assert left_side.transfer_right_side.amount == -2000
+
+
+def test_update_transfer_right_side_amount(session: Session):
+    checking = add_account(session, "Checking")
+    savings = add_account(session, "Savings")
+    old_amount = 1000
+    new_amount = 2000
+
+    left_side = add_transfer(
+        session,
+        TransferCreate(
+            left_side_account_id=checking.account_id,
+            right_side_account_id=savings.account_id,
+            amount=old_amount,
+        ),
+    )
+
+    right_side = left_side.transfer_right_side
+
+    update_transaction(
+        session,
+        right_side,
+        TransactionUpdate(amount=new_amount),
+    )
+
+    assert left_side.amount == -2000
+    assert left_side.transfer_right_side.amount == 2000
+
+
+def test_delete_transaction(session: Session):
+    account = add_account(session, "Checking")
+    transaction = add_transaction(
+        session,
+        TransactionCreate(account_id=account.account_id, amount=10000),
+    )
+
+    transaction_id = transaction.transaction_id
+
+    delete_transaction(session, transaction)
+
+    session.expire_all()
+
+    with pytest.raises(TransactionNotFoundError):
+        get_transaction_by_id(session, transaction_id)
+
+
+def test_delete_transfer_left_side(session: Session):
+    left_account = add_account(session, "Checking")
+    right_account = add_account(session, "Savings")
+
+    left_side = add_transfer(
+        session,
+        TransferCreate(
+            left_side_account_id=left_account.account_id,
+            right_side_account_id=right_account.account_id,
+            amount=10000,
+        ),
+    )
+
+    left_transaction_id = left_side.transaction_id
+    other_transaction_id = left_side.transfer_other_side.transaction_id
+
+    delete_transaction(session, left_side)
+
+    session.expire_all()
+
+    with pytest.raises(TransactionNotFoundError):
+        get_transaction_by_id(session, left_transaction_id)
+
+    with pytest.raises(TransactionNotFoundError):
+        get_transaction_by_id(session, other_transaction_id)
+
+
+def test_delete_transfer_right_side(session: Session):
+    left_account = add_account(session, "Checking")
+    right_account = add_account(session, "Savings")
+
+    left_side = add_transfer(
+        session,
+        TransferCreate(
+            left_side_account_id=left_account.account_id,
+            right_side_account_id=right_account.account_id,
+            amount=10000,
+        ),
+    )
+
+    other_side = left_side.transfer_other_side
+
+    left_transaction_id = left_side.transaction_id
+    other_transaction_id = other_side.transaction_id
+
+    delete_transaction(session, other_side)
+
+    session.expire_all()
+
+    with pytest.raises(TransactionNotFoundError):
+        get_transaction_by_id(session, left_transaction_id)
+
+    with pytest.raises(TransactionNotFoundError):
+        get_transaction_by_id(session, other_transaction_id)

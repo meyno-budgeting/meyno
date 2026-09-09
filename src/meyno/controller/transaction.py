@@ -17,6 +17,7 @@ from meyno.exceptions.transaction import (
     TransactionConversionError,
     TransactionNotFoundError,
     TransferConversionError,
+    TransferOtherSideNotFoundError,
 )
 from meyno.schemas.transaction import (
     TransactionCreate,
@@ -57,7 +58,7 @@ def add_transfer(session: Session, transfer_data: TransferCreate) -> Transaction
             TransactionCreate(
                 date=transfer_data.date,
                 account_id=transfer_data.left_side_account_id,
-                amount=-transfer_data.amount,
+                amount=transfer_data.amount,
                 splits=[],
                 notes=transfer_data.notes,
             ),
@@ -68,7 +69,7 @@ def add_transfer(session: Session, transfer_data: TransferCreate) -> Transaction
             TransactionCreate(
                 date=transfer_data.date,
                 account_id=transfer_data.right_side_account_id,
-                amount=transfer_data.amount,
+                amount=-transfer_data.amount,
                 splits=[],
                 notes=transfer_data.notes,
             ),
@@ -85,7 +86,12 @@ def add_transfer(session: Session, transfer_data: TransferCreate) -> Transaction
 
 
 def get_transaction_by_id(session: Session, transaction_id: int) -> Transaction | None:
-    return get_transaction_by_id_from_database(session, transaction_id)
+    transaction = get_transaction_by_id_from_database(session, transaction_id)
+
+    if transaction is None:
+        raise (TransactionNotFoundError(transaction_id))
+
+    return transaction
 
 
 def get_all_transactions(session: Session) -> list[Transaction]:
@@ -254,7 +260,9 @@ def _update_transaction_amount(
         other_side = transaction.transfer_other_side
 
         if other_side is None:
-            raise TransactionNotFoundError("Could not find other side of transfer")
+            raise TransferOtherSideNotFoundError(
+                "Could not find other side of transfer"
+            )
 
         update_transaction_in_database(
             other_side,
