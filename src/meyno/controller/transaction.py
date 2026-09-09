@@ -176,6 +176,8 @@ def convert_transaction_to_transfer(
 
         transaction.transfer_right_side = transfer_transaction
 
+        session.flush()
+
         _validate_transaction(transaction)
         _validate_transaction(transfer_transaction)
 

@@ -9,6 +9,7 @@ from meyno.controller.transaction import (
     add_transaction,
     add_transfer,
     convert_transaction_to_transfer,
+    convert_transfer_to_transaction,
     delete_transaction,
     get_all_transactions,
     get_all_transactions_for_account,
@@ -499,3 +500,48 @@ def test_delete_transfer_right_side(session: Session):
 
     with pytest.raises(TransactionNotFoundError):
         get_transaction_by_id(session, other_transaction_id)
+
+
+def test_convert_transaction_to_transfer(session: Session):
+    checking = add_account(session, "Checking")
+    savings = add_account(session, "Savings")
+
+    transaction = add_transaction(
+        session,
+        TransactionCreate(
+            account_id=checking.account_id,
+            amount=-500,
+        ),
+    )
+
+    convert_transaction_to_transfer(session, transaction, savings)
+
+    assert transaction.transfer_other_side is not None
+    assert transaction.transfer_other_side.amount == 500
+    assert transaction.transfer_other_side.transfer_other_side is transaction
+
+
+def test_convert_transfer_to_transaction(session):
+    checking = add_account(session, "Checking")
+    savings = add_account(session, "Savings")
+
+    transfer = add_transfer(
+        session,
+        TransferCreate(
+            left_side_account_id=checking.account_id,
+            right_side_account_id=savings.account_id,
+            amount=-5000,
+        ),
+    )
+
+    other_side_transaction_id = transfer.transfer_other_side.transaction_id
+
+    convert_transfer_to_transaction(session, transfer)
+
+    assert transfer.transfer_other_side is None
+
+    with pytest.raises(TransactionNotFoundError):
+        get_transaction_by_id(session, other_side_transaction_id)
+
+
+# TODO(ChaoticDefense): Add tests for attempting to convert transactions/transfers when they already are a transaction/transfer
