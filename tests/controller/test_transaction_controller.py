@@ -505,18 +505,24 @@ def test_delete_transfer_right_side(session: Session):
 def test_convert_transaction_to_transfer(session: Session):
     checking = add_account(session, "Checking")
     savings = add_account(session, "Savings")
+    payee = add_payee(session, "Walmart")
 
     transaction = add_transaction(
         session,
         TransactionCreate(
             account_id=checking.account_id,
             amount=-500,
+            payee_id=payee.payee_id,
         ),
     )
 
     convert_transaction_to_transfer(session, transaction, savings)
 
+    assert len(transaction.splits) == 0
     assert transaction.transfer_other_side is not None
+    assert len(transaction.transfer_other_side.splits) == 0
+    assert transaction.transfer_other_side.account is savings
+    assert transaction.transfer_other_side.payee is payee
     assert transaction.transfer_other_side.amount == 500
     assert transaction.transfer_other_side.transfer_other_side is transaction
 
@@ -709,6 +715,32 @@ def test_delete_split(session: Session):
     )
 
     delete_split(session, transaction.splits[0])
+
+    assert len(transaction.splits) == 1
+    assert transaction.amount == -200
+
+
+def test_delete_last_split(session: Session):
+    checking = add_account(session, "Checking")
+    groceries = add_category(session, "Groceries")
+
+    transaction = add_transaction(
+        session,
+        TransactionCreate(
+            account_id=checking.account_id,
+            amount=-200,
+            splits=[
+                TransactionSplitCreate(
+                    amount=-200,
+                ),
+            ],
+        ),
+    )
+
+    with pytest.raises(
+        InvalidTransactionError, match="Transaction is not part of a valid transfer!"
+    ):
+        delete_split(session, transaction.splits[0])
 
     assert len(transaction.splits) == 1
     assert transaction.amount == -200

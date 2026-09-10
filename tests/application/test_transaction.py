@@ -337,7 +337,6 @@ def test_update_transaction_splits_in_database(
     assert [split.amount for split in transaction.splits] == expected_splits
 
 
-# TODO(ChaoticDefense): Make these tests use the new update logic
 def test_update_split_in_database(session: Session):
     account = add_account_to_database(session, "Checking")
     old_category = add_category_to_database(session, "Groceries")

@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Session
 
+from meyno.application import payee
 from meyno.application.transaction import (
     add_split_to_transaction_in_database,
     add_transaction_to_database,
@@ -160,19 +161,15 @@ def convert_transaction_to_transfer(
             session,
             TransactionCreate(
                 account_id=transfer_account.account_id,
+                payee_id=transaction.payee_id,
                 amount=-1 * transaction.amount,
+                splits=[],
             ),
         )
 
         # Set splits to empty for input transaction
         update_transaction_in_database(
             transaction,
-            TransactionUpdate(splits=[]),
-        )
-
-        # Set splits to empty for input transaction
-        update_transaction_in_database(
-            transfer_transaction,
             TransactionUpdate(splits=[]),
         )
 
