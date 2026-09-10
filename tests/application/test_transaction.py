@@ -13,11 +13,13 @@ from meyno.application.transaction import (
     get_all_transactions_from_database,
     get_split_by_id_from_database,
     get_transaction_by_id_from_database,
+    update_split_in_database,
     update_transaction_in_database,
 )
 from meyno.schemas.transaction import (
     TransactionCreate,
     TransactionSplitCreate,
+    TransactionSplitUpdate,
     TransactionUpdate,
 )
 from meyno.utils import get_local_todays_date
@@ -177,37 +179,6 @@ def test_update_transaction_in_database(session: Session):
     assert stored_transaction.notes == update.notes
 
 
-# TODO(ChaoticDefense): Move this test to controller layer and make test for
-# converting from transfer to transaction
-# def test_convert_transaction_to_transfer(session):
-#     checking_account = create_account(session, "Checking")
-#     savings_account = create_account(session, "Savings")
-#     amount = 500
-
-#     transaction = create_default_transaction(session, checking_account)
-#     transaction = update_transaction_amount(transaction, amount)
-
-#     session.flush()
-
-#     convert_transaction_to_transfer(session, transaction, savings_account)
-
-#     session.commit()
-#     session.expire_all()
-
-#     stored_transaction = get_transaction_by_id(session, transaction.transaction_id)
-
-#     assert stored_transaction is not None
-#     assert stored_transaction.amount == 500
-#     assert stored_transaction.account is checking_account
-#     assert stored_transaction.transaction_id == transaction.transaction_id
-#     assert len(stored_transaction.splits) == 0
-
-#     assert stored_transaction.transfer_transaction is not None
-#     assert stored_transaction.transfer_transaction.amount == -500
-#     assert stored_transaction.transfer_transaction.account is savings_account
-#     assert len(stored_transaction.transfer_transaction.splits) == 0
-
-
 def test_delete_transaction_from_database(session: Session):
     account = add_account_to_database(session, "Checking")
     payee = add_payee_to_database(session, "Walmart")
@@ -234,40 +205,6 @@ def test_delete_transaction_from_database(session: Session):
     session.expire_all()
 
     assert get_transaction_by_id_from_database(session, transaction_id) is None
-
-
-# TODO(ChaoticDefense): Move this test to controller layer
-# def test_delete_transaction_deletes_transfer_transaction(session: Session):
-#     checking = create_account(session, "Checking")
-#     savings = create_account(session, "Savings")
-
-#     checking_transaction = Transaction(
-#         account=checking,
-#         date=datetime.date(2026, 8, 24),
-#         amount=-500,
-#     )
-
-#     savings_transaction = Transaction(
-#         account=savings,
-#         date=datetime.date(2026, 8, 24),
-#         amount=500,
-#     )
-
-#     checking_transaction.transfer_transaction = savings_transaction
-
-#     session.add_all([checking_transaction, savings_transaction])
-#     session.flush()
-
-#     checking_transaction_id = checking_transaction.transaction_id
-#     savings_transaction_id = savings_transaction.transaction_id
-
-#     delete_transaction(session, checking_transaction)
-
-#     session.commit()
-#     session.expire_all()
-
-#     assert get_transaction_by_id(session, checking_transaction_id) is None
-#     assert get_transaction_by_id(session, savings_transaction_id) is None
 
 
 def test_add_split_to_transaction_in_database(session: Session):
@@ -413,69 +350,46 @@ def test_update_transaction_splits_replaces_splits(session: Session):
 
 
 # TODO(ChaoticDefense): Make these tests use the new update logic
-# def test_update_split_category(session: Session):
-#     account = add_account_to_database(session, "Checking")
-#     old_category = add_category_to_database(session, "Groceries")
-#     new_category = add_category_to_database(session, "Dining")
+def test_update_split_in_database(session: Session):
+    account = add_account_to_database(session, "Checking")
+    old_category = add_category_to_database(session, "Groceries")
+    new_category = add_category_to_database(session, "Dining")
 
-#     session.commit()
+    session.commit()
 
-#     transaction = add_transaction_to_database(
-#         session,
-#         TransactionCreate(account_id=account.account_id),
-#     )
+    transaction = add_transaction_to_database(
+        session,
+        TransactionCreate(account_id=account.account_id),
+    )
 
-#     split = add_split_to_transaction_in_database(
-#         session,
-#         transaction,
-#         TransactionSplitCreate(
-#             amount=-5000,
-#             category_id=old_category.category_id,
-#         ),
-#     )
+    split = add_split_to_transaction_in_database(
+        session,
+        transaction,
+        TransactionSplitCreate(
+            amount=-5000,
+            category_id=old_category.category_id,
+        ),
+    )
 
-#     session.flush()
+    session.flush()
 
-#     result = update_split_category_in_database(split, new_category)
+    result = update_split_in_database(
+        split,
+        TransactionSplitUpdate(
+            category_id=new_category.category_id,
+            amount=10000,
+        ),
+    )
 
-#     session.commit()
-#     session.expire_all()
+    session.commit()
+    session.expire_all()
 
-#     assert result is split
-#     assert split.category is new_category
-
-
-# def test_update_split_amount_in_database(session: Session):
-#     account = add_account_to_database(session, "Checking")
-
-#     session.commit()
-
-#     transaction = add_transaction_to_database(
-#         session,
-#         TransactionCreate(
-#             account_id=account.account_id,
-#             amount=-5000,
-#         ),
-#     )
-
-#     split = add_split_to_transaction_in_database(
-#         session,
-#         transaction,
-#         TransactionSplitCreate(amount=-5000),
-#     )
-
-#     session.flush()
-
-#     result = update_split_amount_in_database(split, -3000)
-
-#     session.commit()
-#     session.expire_all()
-
-#     assert result is split
-#     assert split.amount == -3000
+    assert result is split
+    assert split.category is new_category
+    assert split.amount == 10000
 
 
-def test_delete_transaction_split(session: Session):
+def test_delete_transaction_split_from_database(session: Session):
     account = add_account_to_database(session, "Checking")
 
     session.commit()
