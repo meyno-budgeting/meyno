@@ -333,7 +333,18 @@ def test_update_transaction_amount_single_split(session: Session):
     assert transaction.splits[0].amount == 1500
 
 
-def test_update_transaction_amount_multiple_splits_increasing(session: Session):
+@pytest.mark.parametrize(
+    ("new_amount", "expected_new_split_amount"),
+    [
+        (75, -25),
+        (125, 25),
+    ],
+)
+def test_update_transaction_amount_multiple_splits(
+    session: Session,
+    new_amount: int,
+    expected_new_split_amount: int,
+):
     account = add_account(session, "Checking")
 
     transaction = add_transaction(
@@ -351,36 +362,15 @@ def test_update_transaction_amount_multiple_splits_increasing(session: Session):
     update_transaction(
         session,
         transaction,
-        TransactionUpdate(amount=125),
+        TransactionUpdate(amount=new_amount),
     )
 
-    assert transaction.amount == 125
-    assert [split.amount for split in transaction.splits] == [60, 40, 25]
-
-
-def test_update_transaction_amount_multiple_splits_decreasing(session: Session):
-    account = add_account(session, "Checking")
-
-    transaction = add_transaction(
-        session,
-        TransactionCreate(
-            account_id=account.account_id,
-            amount=100,
-            splits=[
-                TransactionSplitCreate(amount=60),
-                TransactionSplitCreate(amount=40),
-            ],
-        ),
-    )
-
-    update_transaction(
-        session,
-        transaction,
-        TransactionUpdate(amount=75),
-    )
-
-    assert transaction.amount == 75
-    assert [split.amount for split in transaction.splits] == [60, 40, -25]
+    assert transaction.amount == new_amount
+    assert [split.amount for split in transaction.splits] == [
+        60,
+        40,
+        expected_new_split_amount,
+    ]
 
 
 def test_update_transfer_left_side_amount(session: Session):

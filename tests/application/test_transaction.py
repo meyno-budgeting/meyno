@@ -1,5 +1,6 @@
 import datetime
 
+import pytest
 from sqlalchemy.orm import Session
 
 from meyno.application.account import add_account_to_database
@@ -299,9 +300,19 @@ def test_get_transaction_split_by_id_not_found(session: Session):
     assert get_split_by_id_from_database(session, 9999) is None
 
 
-def test_update_transaction_splits_in_database(session: Session):
+@pytest.mark.parametrize(
+    ("new_splits", "expected_splits"),
+    [
+        ([], []),
+        ([TransactionSplitCreate(amount=-3000)], [-3000]),
+    ],
+)
+def test_update_transaction_splits_in_database(
+    session: Session,
+    new_splits: list[TransactionSplitCreate],
+    expected_splits: list[int],
+):
     account = add_account_to_database(session, "Checking")
-
     session.commit()
 
     transaction = add_transaction_to_database(
@@ -317,36 +328,13 @@ def test_update_transaction_splits_in_database(session: Session):
 
     session.flush()
 
-    result = update_transaction_in_database(transaction, TransactionUpdate(splits=[]))
+    result = update_transaction_in_database(
+        transaction,
+        TransactionUpdate(splits=new_splits),
+    )
 
     assert result is transaction
-    assert transaction.splits == []
-
-
-def test_update_transaction_splits_replaces_splits(session: Session):
-    account = add_account_to_database(session, "Checking")
-
-    session.commit()
-
-    transaction = add_transaction_to_database(
-        session,
-        TransactionCreate(account_id=account.account_id),
-    )
-
-    add_split_to_transaction_in_database(
-        session,
-        transaction,
-        TransactionSplitCreate(amount=-5000),
-    )
-
-    session.flush()
-
-    update_transaction_in_database(
-        transaction, TransactionUpdate(splits=[TransactionSplitCreate(amount=-3000)])
-    )
-
-    assert len(transaction.splits) == 1
-    assert transaction.splits[0].amount == -3000
+    assert [split.amount for split in transaction.splits] == expected_splits
 
 
 # TODO(ChaoticDefense): Make these tests use the new update logic
