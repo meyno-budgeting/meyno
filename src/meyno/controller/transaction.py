@@ -153,7 +153,7 @@ def convert_transaction_to_transfer(
         if transaction.transfer_other_side is not None:
             raise TransactionConversionError("Transaction is already a transfer")
 
-        if transfer_account is transaction.account:
+        if transfer_account.account_id == transaction.account_id:
             raise TransactionConversionError("Accounts must be different")
 
         # Create a transaction in other account with opposite amount
