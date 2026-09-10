@@ -28,7 +28,7 @@ from meyno.schemas.transaction import (
 from meyno.utils import controller_write
 
 if TYPE_CHECKING:
-    from meyno.database.models import Account, Category, Transaction, TransactionSplit
+    from meyno.database.models import Account, Transaction, TransactionSplit
 
 
 def add_transaction(
@@ -111,7 +111,7 @@ def update_transaction(
 
     with controller_write(session):
         if update.amount is not None:
-            _update_transaction_amount(session, transaction, update.amount)
+            _handle_transaction_amount_update(session, transaction, update.amount)
 
         update_transaction_in_database(transaction, update)
 
@@ -220,22 +220,24 @@ def convert_transfer_to_transaction(
 
 
 def add_split_to_transaction(
-    session: Session,
-    transaction: Transaction,
-    amount: int = 0,
-    category: Category | None = None,
+    session: Session, transaction: Transaction, split_data: TransactionSplitCreate
 ) -> TransactionSplit:
 
     with controller_write(session):
-        split_data = TransactionSplitCreate(amount=amount)
+        split = add_split_to_transaction_in_database(session, transaction, split_data)
 
-        if category is not None:
-            split_data.category_id = category.category_id
+        session.flush()
 
-        return add_split_to_transaction_in_database(session, transaction, split_data)
+        # Update transaction total to be the new split total
+        new_total = _get_split_amount_total(transaction)
+        update_transaction_in_database(
+            transaction,
+            TransactionUpdate(amount=new_total),
+        )
+        return split
 
 
-def _update_transaction_amount(
+def _handle_transaction_amount_update(
     session: Session, transaction: Transaction, new_amount: int
 ) -> None:
 

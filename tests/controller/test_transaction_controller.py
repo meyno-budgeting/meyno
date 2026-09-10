@@ -4,8 +4,10 @@ import pytest
 from sqlalchemy.orm import Session
 
 from meyno.controller.account import add_account
+from meyno.controller.category import add_category
 from meyno.controller.payee import add_payee
 from meyno.controller.transaction import (
+    add_split_to_transaction,
     add_transaction,
     add_transfer,
     convert_transaction_to_transfer,
@@ -579,3 +581,51 @@ def test_convert_already_transaction(session: Session):
 
     with pytest.raises(TransferConversionError):
         convert_transfer_to_transaction(session, transaction)
+
+
+def test_add_split_to_transaction_defaults(session: Session):
+    checking = add_account(session, "Checking")
+
+    transaction = add_transaction(
+        session,
+        TransactionCreate(
+            account_id=checking.account_id,
+            amount=-500,
+        ),
+    )
+
+    new_split = add_split_to_transaction(session, transaction, TransactionSplitCreate())
+
+    assert len(transaction.splits) == 2
+    assert transaction.splits[1] is new_split
+    assert transaction.splits[1].amount == 0
+    assert transaction.splits[1].category is None
+    assert transaction.amount == -500
+
+
+def test_add_split_to_transaction(session: Session):
+    checking = add_account(session, "Checking")
+    category = add_category(session, "Groceries")
+
+    transaction = add_transaction(
+        session,
+        TransactionCreate(
+            account_id=checking.account_id,
+            amount=-500,
+        ),
+    )
+
+    new_split = add_split_to_transaction(
+        session,
+        transaction,
+        TransactionSplitCreate(
+            category_id=category.category_id,
+            amount=-100,
+        ),
+    )
+
+    assert len(transaction.splits) == 2
+    assert transaction.splits[1] is new_split
+    assert transaction.splits[1].amount == -100
+    assert transaction.splits[1].category is category
+    assert transaction.amount == -600
