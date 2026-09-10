@@ -19,7 +19,9 @@ from meyno.controller.transaction import (
 from meyno.exceptions.transaction import (
     InvalidTransactionError,
     InvalidTransferCreateError,
+    TransactionConversionError,
     TransactionNotFoundError,
+    TransferConversionError,
 )
 from meyno.schemas.transaction import (
     TransactionCreate,
@@ -544,4 +546,36 @@ def test_convert_transfer_to_transaction(session):
         get_transaction_by_id(session, other_side_transaction_id)
 
 
-# TODO(ChaoticDefense): Add tests for attempting to convert transactions/transfers when they already are a transaction/transfer
+def test_convert_already_transfer(session: Session):
+    checking = add_account(session, "Checking")
+    savings = add_account(session, "Savings")
+
+    transfer = add_transfer(
+        session,
+        TransferCreate(
+            left_side_account_id=checking.account_id,
+            right_side_account_id=savings.account_id,
+            amount=-5000,
+        ),
+    )
+
+    with pytest.raises(TransactionConversionError):
+        convert_transaction_to_transfer(session, transfer, checking)
+
+    with pytest.raises(TransactionConversionError):
+        convert_transaction_to_transfer(session, transfer, savings)
+
+
+def test_convert_already_transaction(session: Session):
+    checking = add_account(session, "Checking")
+
+    transaction = add_transaction(
+        session,
+        TransactionCreate(
+            account_id=checking.account_id,
+            amount=-500,
+        ),
+    )
+
+    with pytest.raises(TransferConversionError):
+        convert_transfer_to_transaction(session, transaction)
