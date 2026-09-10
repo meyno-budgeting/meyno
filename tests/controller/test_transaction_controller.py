@@ -16,6 +16,7 @@ from meyno.controller.transaction import (
     get_all_transactions,
     get_all_transactions_for_account,
     get_transaction_by_id,
+    update_split,
     update_transaction,
 )
 from meyno.exceptions.transaction import (
@@ -28,6 +29,7 @@ from meyno.exceptions.transaction import (
 from meyno.schemas.transaction import (
     TransactionCreate,
     TransactionSplitCreate,
+    TransactionSplitUpdate,
     TransactionUpdate,
     TransferCreate,
 )
@@ -628,4 +630,40 @@ def test_add_split_to_transaction(session: Session):
     assert transaction.splits[1] is new_split
     assert transaction.splits[1].amount == -100
     assert transaction.splits[1].category is category
+    assert transaction.amount == -600
+
+
+def test_update_split(session: Session):
+    checking = add_account(session, "Checking")
+    groceries = add_category(session, "Groceries")
+    fun = add_category(session, "Fun")
+
+    transaction = add_transaction(
+        session,
+        TransactionCreate(
+            account_id=checking.account_id,
+            amount=-500,
+            splits=[
+                TransactionSplitCreate(
+                    amount=-300,
+                    category_id=groceries.category_id,
+                ),
+                TransactionSplitCreate(
+                    amount=-200,
+                ),
+            ],
+        ),
+    )
+
+    split = update_split(
+        session,
+        transaction.splits[1],
+        TransactionSplitUpdate(
+            amount=-300,
+            category_id=fun.category_id,
+        ),
+    )
+
+    assert split.amount == -300
+    assert split.category is fun
     assert transaction.amount == -600

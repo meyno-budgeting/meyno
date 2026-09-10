@@ -12,6 +12,11 @@ class TransactionSplitCreate(BaseModel):
     category_id: int | None = None
 
 
+class TransactionSplitUpdate(BaseModel):
+    amount: int | None = None
+    category_id: int | None = None
+
+
 class TransactionCreate(BaseModel):
     date: datetime.date = Field(default_factory=get_local_todays_date)
     account_id: int

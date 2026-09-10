@@ -3,12 +3,13 @@ from typing import TYPE_CHECKING
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from meyno.database.models import Account, Category, Transaction, TransactionSplit
+from meyno.database.models import Account, Transaction, TransactionSplit
 
 if TYPE_CHECKING:
     from meyno.schemas.transaction import (
         TransactionCreate,
         TransactionSplitCreate,
+        TransactionSplitUpdate,
         TransactionUpdate,
     )
 
@@ -110,20 +111,16 @@ def get_split_by_id_from_database(
     return session.get(TransactionSplit, split_id)
 
 
-def update_split_category_in_database(
-    split: TransactionSplit, new_category: Category
+def update_split_in_database(
+    split: TransactionSplit, update_data: TransactionSplitUpdate
 ) -> TransactionSplit:
 
-    split.category = new_category
+    if update_data.amount is not None:
+        split.amount = update_data.amount
 
-    return split
+    if update_data.category_id is not None:
+        split.category_id = update_data.category_id
 
-
-def update_split_amount_in_database(
-    split: TransactionSplit, new_amount: int
-) -> TransactionSplit:
-
-    split.amount = new_amount
     return split
 
 

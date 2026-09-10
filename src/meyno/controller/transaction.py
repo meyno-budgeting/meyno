@@ -9,7 +9,7 @@ from meyno.application.transaction import (
     get_all_transactions_for_account_from_database,
     get_all_transactions_from_database,
     get_transaction_by_id_from_database,
-    update_split_amount_in_database,
+    update_split_in_database,
     update_transaction_in_database,
 )
 from meyno.exceptions.transaction import (
@@ -22,6 +22,7 @@ from meyno.exceptions.transaction import (
 from meyno.schemas.transaction import (
     TransactionCreate,
     TransactionSplitCreate,
+    TransactionSplitUpdate,
     TransactionUpdate,
     TransferCreate,
 )
@@ -106,14 +107,14 @@ def get_all_transactions_for_account(
 
 
 def update_transaction(
-    session: Session, transaction: Transaction, update: TransactionUpdate
+    session: Session, transaction: Transaction, update_data: TransactionUpdate
 ) -> Transaction:
 
     with controller_write(session):
-        if update.amount is not None:
-            _handle_transaction_amount_update(session, transaction, update.amount)
+        if update_data.amount is not None:
+            _handle_transaction_amount_update(session, transaction, update_data.amount)
 
-        update_transaction_in_database(transaction, update)
+        update_transaction_in_database(transaction, update_data)
 
         _validate_transaction(transaction)
 
@@ -234,6 +235,28 @@ def add_split_to_transaction(
             transaction,
             TransactionUpdate(amount=new_total),
         )
+
+        _validate_transaction(transaction)
+        return split
+
+
+def update_split(
+    session: Session, split: TransactionSplit, split_data: TransactionSplitUpdate
+) -> TransactionSplit:
+
+    with controller_write(session):
+        update_split_in_database(split, split_data)
+
+        split_transaction = split.transaction
+
+        new_total = _get_split_amount_total(split_transaction)
+        update_transaction_in_database(
+            split_transaction,
+            TransactionUpdate(amount=new_total),
+        )
+
+        _validate_transaction(split_transaction)
+
         return split
 
 
@@ -244,7 +267,10 @@ def _handle_transaction_amount_update(
     if len(transaction.splits) == 1:
         # "Normal" non-transfer transaction
         # Update the only split amount as well
-        update_split_amount_in_database(transaction.splits[0], new_amount)
+        update_split_in_database(
+            transaction.splits[0],
+            TransactionSplitUpdate(amount=new_amount),
+        )
 
     elif len(transaction.splits) > 1:
         split_total = _get_split_amount_total(transaction)
