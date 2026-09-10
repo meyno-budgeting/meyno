@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Session
 
-from meyno.application import payee
 from meyno.application.transaction import (
     add_split_to_transaction_in_database,
     add_transaction_to_database,
@@ -19,7 +18,6 @@ from meyno.exceptions.transaction import (
     TransactionConversionError,
     TransactionNotFoundError,
     TransferConversionError,
-    TransferOtherSideNotFoundError,
 )
 from meyno.schemas.transaction import (
     TransactionCreate,
@@ -113,8 +111,7 @@ def update_transaction(
 ) -> Transaction:
 
     with controller_write(session):
-        if update_data.amount is not None:
-            _handle_transaction_amount_update(session, transaction, update_data.amount)
+        _handle_transaction_update(session, transaction, update_data)
 
         update_transaction_in_database(transaction, update_data)
 
@@ -154,7 +151,10 @@ def convert_transaction_to_transfer(
 
     with controller_write(session):
         if transaction.transfer_other_side is not None:
-            raise TransactionConversionError
+            raise TransactionConversionError("Transaction is already a transfer")
+
+        if transfer_account is transaction.account:
+            raise TransactionConversionError("Accounts must be different")
 
         # Create a transaction in other account with opposite amount
         transfer_transaction = add_transaction_to_database(
@@ -164,6 +164,7 @@ def convert_transaction_to_transfer(
                 payee_id=transaction.payee_id,
                 amount=-1 * transaction.amount,
                 splits=[],
+                notes=transaction.notes,
             ),
         )
 
@@ -273,6 +274,26 @@ def _update_transaction_amount_from_splits(split_transaction: Transaction) -> No
     )
 
 
+def _handle_transaction_update(
+    session: Session,
+    transaction: Transaction,
+    update_data: TransactionUpdate,
+) -> None:
+    if transaction.transfer_other_side is not None:
+        other_side = transaction.transfer_other_side
+
+        other_update = update_data.model_copy()
+
+        if other_update.amount is not None:
+            other_update.amount = -other_update.amount
+
+        update_transaction_in_database(other_side, other_update)
+        return
+
+    if update_data.amount is not None:
+        _handle_transaction_amount_update(session, transaction, update_data.amount)
+
+
 def _handle_transaction_amount_update(
     session: Session, transaction: Transaction, new_amount: int
 ) -> None:
@@ -296,21 +317,6 @@ def _handle_transaction_amount_update(
                 transaction,
                 TransactionSplitCreate(amount=diff, category_id=None),
             )
-
-    elif len(transaction.splits) == 0:
-        # Transfer
-        # Update other side of transaction
-        other_side = transaction.transfer_other_side
-
-        if other_side is None:
-            raise TransferOtherSideNotFoundError(
-                "Could not find other side of transfer"
-            )
-
-        update_transaction_in_database(
-            other_side,
-            TransactionUpdate(amount=-1 * new_amount),
-        )
 
 
 def _get_split_amount_total(transaction: Transaction) -> int:

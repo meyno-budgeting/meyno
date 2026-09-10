@@ -375,11 +375,12 @@ def test_update_transaction_amount_multiple_splits(
     ]
 
 
-def test_update_transfer_left_side_amount(session: Session):
+def test_update_transfer_left_side(session: Session):
     checking = add_account(session, "Checking")
     savings = add_account(session, "Savings")
     old_amount = 1000
     new_amount = 2000
+    payee = add_payee(session, "Walmart")
 
     left_side = add_transfer(
         session,
@@ -393,18 +394,27 @@ def test_update_transfer_left_side_amount(session: Session):
     update_transaction(
         session,
         left_side,
-        TransactionUpdate(amount=new_amount),
+        TransactionUpdate(
+            amount=new_amount,
+            payee_id=payee.payee_id,
+            notes="This is a note",
+        ),
     )
 
     assert left_side.amount == 2000
-    assert left_side.transfer_right_side.amount == -2000
+    assert left_side.transfer_other_side.amount == -2000
+    assert left_side.payee is payee
+    assert left_side.transfer_other_side.payee is payee
+    assert left_side.notes == "This is a note"
+    assert left_side.transfer_other_side.notes == "This is a note"
 
 
-def test_update_transfer_right_side_amount(session: Session):
+def test_update_transfer_right_side(session: Session):
     checking = add_account(session, "Checking")
     savings = add_account(session, "Savings")
     old_amount = 1000
     new_amount = 2000
+    payee = add_payee(session, "Walmart")
 
     left_side = add_transfer(
         session,
@@ -420,11 +430,19 @@ def test_update_transfer_right_side_amount(session: Session):
     update_transaction(
         session,
         right_side,
-        TransactionUpdate(amount=new_amount),
+        TransactionUpdate(
+            amount=new_amount,
+            payee_id=payee.payee_id,
+            notes="This is a note",
+        ),
     )
 
     assert left_side.amount == -2000
     assert left_side.transfer_right_side.amount == 2000
+    assert left_side.payee is payee
+    assert left_side.transfer_other_side.payee is payee
+    assert left_side.notes == "This is a note"
+    assert left_side.transfer_other_side.notes == "This is a note"
 
 
 def test_delete_transaction(session: Session):
@@ -513,6 +531,7 @@ def test_convert_transaction_to_transfer(session: Session):
             account_id=checking.account_id,
             amount=-500,
             payee_id=payee.payee_id,
+            notes="This is a note",
         ),
     )
 
@@ -523,8 +542,25 @@ def test_convert_transaction_to_transfer(session: Session):
     assert len(transaction.transfer_other_side.splits) == 0
     assert transaction.transfer_other_side.account is savings
     assert transaction.transfer_other_side.payee is payee
+    assert transaction.transfer_other_side.notes == "This is a note"
     assert transaction.transfer_other_side.amount == 500
     assert transaction.transfer_other_side.transfer_other_side is transaction
+
+
+def test_convert_transaction_to_transfer_same_account(session: Session):
+    checking = add_account(session, "Checking")
+
+    transaction = add_transaction(
+        session,
+        TransactionCreate(
+            account_id=checking.account_id,
+            amount=-500,
+            notes="This is a note",
+        ),
+    )
+
+    with pytest.raises(TransactionConversionError, match="Accounts must be different"):
+        convert_transaction_to_transfer(session, transaction, checking)
 
 
 def test_convert_transfer_to_transaction_left_side(session):
@@ -587,10 +623,14 @@ def test_convert_already_transfer(session: Session):
         ),
     )
 
-    with pytest.raises(TransactionConversionError):
+    with pytest.raises(
+        TransactionConversionError, match="Transaction is already a transfer"
+    ):
         convert_transaction_to_transfer(session, transfer, checking)
 
-    with pytest.raises(TransactionConversionError):
+    with pytest.raises(
+        TransactionConversionError, match="Transaction is already a transfer"
+    ):
         convert_transaction_to_transfer(session, transfer, savings)
 
 
@@ -722,7 +762,6 @@ def test_delete_split(session: Session):
 
 def test_delete_last_split(session: Session):
     checking = add_account(session, "Checking")
-    groceries = add_category(session, "Groceries")
 
     transaction = add_transaction(
         session,

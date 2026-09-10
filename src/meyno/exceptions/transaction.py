@@ -13,8 +13,8 @@ class TransactionNotFoundError(TransactionError):
 class TransactionConversionError(TransactionError):
     """Raised when a transaction is already a transfer"""
 
-    def __init__(self) -> None:
-        super().__init__("Transaction is already a transfer")
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
 
 
 class TransferConversionError(TransactionError):
