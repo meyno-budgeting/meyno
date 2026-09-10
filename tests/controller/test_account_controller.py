@@ -19,6 +19,7 @@ from meyno.exceptions.account import (
     AccountNameEmptyError,
     AccountNotFoundError,
 )
+from meyno.exceptions.transaction import TransactionNotFoundError
 from meyno.schemas.transaction import TransactionCreate, TransferCreate
 
 
@@ -182,7 +183,8 @@ def test_delete_account(session: Session):
     with pytest.raises(AccountNotFoundError):
         get_account_by_id(session, account.account_id)
 
-    assert get_transaction_by_id(session, transaction.transaction_id) is None
+    with pytest.raises(TransactionNotFoundError):
+        get_transaction_by_id(session, transaction.transaction_id)
 
 
 def test_delete_account_preserves_incoming_transfer_transaction(
