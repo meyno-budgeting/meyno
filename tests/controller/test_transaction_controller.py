@@ -12,6 +12,7 @@ from meyno.controller.transaction import (
     add_transfer,
     convert_transaction_to_transfer,
     convert_transfer_to_transaction,
+    delete_split,
     delete_transaction,
     get_all_transactions,
     get_all_transactions_for_account,
@@ -288,6 +289,7 @@ def test_updating_transfer_with_splits(session: Session):
 
 def test_update_transaction(session: Session):
     account = add_account(session, "Checking")
+    new_payee = add_payee(session, "Walmart")
 
     transaction = add_transaction(
         session,
@@ -299,8 +301,7 @@ def test_update_transaction(session: Session):
     )
 
     update = TransactionUpdate(
-        notes="Updated",
-        date=datetime.date(2026, 1, 15),
+        notes="Updated", date=datetime.date(2026, 1, 15), payee_id=new_payee.payee_id
     )
 
     result = update_transaction(session, transaction, update)
@@ -309,6 +310,7 @@ def test_update_transaction(session: Session):
     assert transaction.notes == "Updated"
     assert transaction.date == datetime.date(2026, 1, 15)
     assert transaction.amount == 1000
+    assert transaction.payee is new_payee
 
 
 def test_update_transaction_amount_single_split(session: Session):
@@ -436,6 +438,8 @@ def test_delete_transaction(session: Session):
 
     delete_transaction(session, transaction)
 
+    assert len(account.transactions) == 0
+
     session.expire_all()
 
     with pytest.raises(TransactionNotFoundError):
@@ -517,11 +521,11 @@ def test_convert_transaction_to_transfer(session: Session):
     assert transaction.transfer_other_side.transfer_other_side is transaction
 
 
-def test_convert_transfer_to_transaction(session):
+def test_convert_transfer_to_transaction_left_side(session):
     checking = add_account(session, "Checking")
     savings = add_account(session, "Savings")
 
-    transfer = add_transfer(
+    transfer_left_side = add_transfer(
         session,
         TransferCreate(
             left_side_account_id=checking.account_id,
@@ -530,14 +534,38 @@ def test_convert_transfer_to_transaction(session):
         ),
     )
 
-    other_side_transaction_id = transfer.transfer_other_side.transaction_id
+    right_side_transaction_id = transfer_left_side.transfer_other_side.transaction_id
 
-    convert_transfer_to_transaction(session, transfer)
+    convert_transfer_to_transaction(session, transfer_left_side)
 
-    assert transfer.transfer_other_side is None
+    assert transfer_left_side.transfer_other_side is None
 
     with pytest.raises(TransactionNotFoundError):
-        get_transaction_by_id(session, other_side_transaction_id)
+        get_transaction_by_id(session, right_side_transaction_id)
+
+
+def test_convert_transfer_to_transaction_right_side(session):
+    checking = add_account(session, "Checking")
+    savings = add_account(session, "Savings")
+
+    transfer_left_side = add_transfer(
+        session,
+        TransferCreate(
+            left_side_account_id=checking.account_id,
+            right_side_account_id=savings.account_id,
+            amount=-5000,
+        ),
+    )
+
+    transfer_right_side = transfer_left_side.transfer_other_side
+    left_side_transaction_id = transfer_left_side.transaction_id
+
+    convert_transfer_to_transaction(session, transfer_right_side)
+
+    assert transfer_right_side.transfer_other_side is None
+
+    with pytest.raises(TransactionNotFoundError):
+        get_transaction_by_id(session, left_side_transaction_id)
 
 
 def test_convert_already_transfer(session: Session):
@@ -657,3 +685,30 @@ def test_update_split(session: Session):
     assert split.amount == -300
     assert split.category is fun
     assert transaction.amount == -600
+
+
+def test_delete_split(session: Session):
+    checking = add_account(session, "Checking")
+    groceries = add_category(session, "Groceries")
+
+    transaction = add_transaction(
+        session,
+        TransactionCreate(
+            account_id=checking.account_id,
+            amount=-500,
+            splits=[
+                TransactionSplitCreate(
+                    amount=-300,
+                    category_id=groceries.category_id,
+                ),
+                TransactionSplitCreate(
+                    amount=-200,
+                ),
+            ],
+        ),
+    )
+
+    delete_split(session, transaction.splits[0])
+
+    assert len(transaction.splits) == 1
+    assert transaction.amount == -200

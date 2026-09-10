@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from meyno.application.transaction import (
     add_split_to_transaction_in_database,
     add_transaction_to_database,
+    delete_split_from_transaction_in_database,
     delete_transaction_from_database,
     get_all_transactions_for_account_from_database,
     get_all_transactions_from_database,
@@ -132,7 +133,7 @@ def delete_transaction(session: Session, transaction: Transaction) -> None:
 
         if other_side is None:
             # This transaction is not part of a transfer.
-            session.delete(transaction)
+            delete_transaction_from_database(session, transaction)
             return
 
         # Break the transfer relationship from whichever side owns it.
@@ -142,8 +143,8 @@ def delete_transaction(session: Session, transaction: Transaction) -> None:
             other_side.transfer_right_side = None
 
         # Delete both sides of the transfer.
-        session.delete(transaction)
-        session.delete(other_side)
+        delete_transaction_from_database(session, transaction)
+        delete_transaction_from_database(session, other_side)
 
 
 def convert_transaction_to_transfer(
@@ -217,6 +218,8 @@ def convert_transfer_to_transaction(
 
         _validate_transaction(transaction)
 
+        session.expire(transaction, ["transfer_left_side"])
+
         return transaction
 
 
@@ -230,11 +233,7 @@ def add_split_to_transaction(
         session.flush()
 
         # Update transaction total to be the new split total
-        new_total = _get_split_amount_total(transaction)
-        update_transaction_in_database(
-            transaction,
-            TransactionUpdate(amount=new_total),
-        )
+        _update_transaction_amount_from_splits(transaction)
 
         _validate_transaction(transaction)
         return split
@@ -249,15 +248,32 @@ def update_split(
 
         split_transaction = split.transaction
 
-        new_total = _get_split_amount_total(split_transaction)
-        update_transaction_in_database(
-            split_transaction,
-            TransactionUpdate(amount=new_total),
-        )
+        _update_transaction_amount_from_splits(split_transaction)
 
         _validate_transaction(split_transaction)
 
         return split
+
+
+def delete_split(session: Session, split: TransactionSplit) -> None:
+    with controller_write(session):
+        split_transaction = split.transaction
+
+        delete_split_from_transaction_in_database(session, split)
+        session.flush()
+        session.expire(split_transaction, ["splits"])
+
+        _update_transaction_amount_from_splits(split_transaction)
+
+        _validate_transaction(split_transaction)
+
+
+def _update_transaction_amount_from_splits(split_transaction: Transaction) -> None:
+    new_total = _get_split_amount_total(split_transaction)
+    update_transaction_in_database(
+        split_transaction,
+        TransactionUpdate(amount=new_total),
+    )
 
 
 def _handle_transaction_amount_update(
