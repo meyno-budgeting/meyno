@@ -279,15 +279,19 @@ def _handle_transaction_update(
     transaction: Transaction,
     update_data: TransactionUpdate,
 ) -> None:
+
     if transaction.transfer_other_side is not None:
         other_side = transaction.transfer_other_side
 
-        other_update = update_data.model_copy()
-
-        if other_update.amount is not None:
-            other_update.amount = -other_update.amount
+        other_update = TransactionUpdate(
+            date=update_data.date,
+            payee_id=update_data.payee_id,
+            amount=-update_data.amount if update_data.amount is not None else None,
+            notes=update_data.notes,
+        )
 
         update_transaction_in_database(other_side, other_update)
+
         return
 
     if update_data.amount is not None:
