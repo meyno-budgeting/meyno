@@ -381,6 +381,7 @@ def test_update_transfer_left_side(session: Session):
     old_amount = 1000
     new_amount = 2000
     payee = add_payee(session, "Walmart")
+    new_date = datetime.date(2026, 9, 7)
 
     left_side = add_transfer(
         session,
@@ -398,6 +399,7 @@ def test_update_transfer_left_side(session: Session):
             amount=new_amount,
             payee_id=payee.payee_id,
             notes="This is a note",
+            date=new_date,
         ),
     )
 
@@ -407,6 +409,8 @@ def test_update_transfer_left_side(session: Session):
     assert left_side.transfer_other_side.payee is payee
     assert left_side.notes == "This is a note"
     assert left_side.transfer_other_side.notes == "This is a note"
+    assert left_side.date == new_date
+    assert left_side.transfer_other_side.date == new_date
 
 
 def test_update_transfer_right_side(session: Session):
@@ -415,6 +419,7 @@ def test_update_transfer_right_side(session: Session):
     old_amount = 1000
     new_amount = 2000
     payee = add_payee(session, "Walmart")
+    new_date = datetime.date(2026, 9, 7)
 
     left_side = add_transfer(
         session,
@@ -434,6 +439,7 @@ def test_update_transfer_right_side(session: Session):
             amount=new_amount,
             payee_id=payee.payee_id,
             notes="This is a note",
+            date=new_date,
         ),
     )
 
@@ -443,6 +449,8 @@ def test_update_transfer_right_side(session: Session):
     assert left_side.transfer_other_side.payee is payee
     assert left_side.notes == "This is a note"
     assert left_side.transfer_other_side.notes == "This is a note"
+    assert left_side.date == new_date
+    assert left_side.transfer_other_side.date == new_date
 
 
 def test_delete_transaction(session: Session):
@@ -544,6 +552,7 @@ def test_convert_transaction_to_transfer(session: Session):
     assert transaction.transfer_other_side.payee is payee
     assert transaction.transfer_other_side.notes == "This is a note"
     assert transaction.transfer_other_side.amount == 500
+    assert transaction.transfer_other_side.date == transaction.date
     assert transaction.transfer_other_side.transfer_other_side is transaction
 
 
