@@ -216,7 +216,10 @@ def test_add_split_to_transaction_in_database(session: Session):
 
     transaction = add_transaction_to_database(
         session,
-        TransactionCreate(account_id=account.account_id, amount=-5000),
+        TransactionCreate(
+            account_id=account.account_id,
+            amount=-5000,
+        ),
     )
 
     split_data = TransactionSplitCreate(

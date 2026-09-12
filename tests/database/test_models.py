@@ -445,7 +445,7 @@ def test_foreign_key_violation_for_category(session):
 
     split = TransactionSplit(
         transaction_id=transaction.transaction_id,
-        category_id=999,
+        category_id=uuid6.uuid7(),
         amount=5000,
     )
 

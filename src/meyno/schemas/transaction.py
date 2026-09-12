@@ -10,12 +10,12 @@ from meyno.utils import get_local_todays_date
 
 class TransactionSplitCreate(BaseModel):
     amount: int = 0
-    category_id: int | None = None
+    category_id: uuid.UUID | None = None
 
 
 class TransactionSplitUpdate(BaseModel):
     amount: int | None = None
-    category_id: int | None = None
+    category_id: uuid.UUID | None = None
 
 
 class TransactionCreate(BaseModel):

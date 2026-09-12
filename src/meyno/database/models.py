@@ -32,7 +32,11 @@ class Account(Base):
 class Category(Base):
     __tablename__ = "category"
 
-    category_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    category_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        primary_key=True,
+        default=uuid6.uuid7,
+    )
     name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
 
     transaction_splits: Mapped[list[TransactionSplit]] = relationship(
