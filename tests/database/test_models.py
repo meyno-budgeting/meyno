@@ -415,7 +415,7 @@ def test_foreign_key_violation_for_payee(session):
 
     transaction = Transaction(
         account_id=account.account_id,
-        payee_id=999,
+        payee_id=uuid6.uuid7(),
         date=date(2026, 8, 18),
         amount=5000,
     )

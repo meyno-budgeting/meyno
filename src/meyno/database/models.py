@@ -50,7 +50,11 @@ class Category(Base):
 class Payee(Base):
     __tablename__ = "payee"
 
-    payee_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    payee_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        primary_key=True,
+        default=uuid6.uuid7,
+    )
     name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
 
     transactions: Mapped[list[Transaction]] = relationship(back_populates="payee")

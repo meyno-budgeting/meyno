@@ -22,7 +22,7 @@ class TransactionCreate(BaseModel):
     date: datetime.date = Field(default_factory=get_local_todays_date)
     account_id: uuid.UUID
     amount: int = 0
-    payee_id: int | None = None
+    payee_id: uuid.UUID | None = None
     notes: str | None = None
     splits: list[TransactionSplitCreate] | None = None
 
@@ -47,7 +47,7 @@ class TransferCreate(BaseModel):
 class TransactionUpdate(BaseModel):
     date: datetime.date | None = None
     account_id: uuid.UUID | None = None
-    payee_id: int | None = None
+    payee_id: uuid.UUID | None = None
     amount: int | None = None
     notes: str | None = None
     splits: list[TransactionSplitCreate] | None = None

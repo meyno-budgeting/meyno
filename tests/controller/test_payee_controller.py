@@ -1,4 +1,5 @@
 import pytest
+import uuid6
 from sqlalchemy.orm import Session
 
 from meyno.controller.account import add_account
@@ -72,7 +73,7 @@ def test_get_payee_by_id(session: Session):
 
 def test_get_payee_by_id_not_found(session: Session):
     with pytest.raises(PayeeNotFoundError):
-        get_payee_by_id(session, 999)
+        get_payee_by_id(session, uuid6.uuid7())
 
 
 def test_get_payee_by_name(session: Session):

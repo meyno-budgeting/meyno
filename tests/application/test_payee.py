@@ -1,3 +1,4 @@
+import uuid6
 from sqlalchemy.orm import Session
 
 from meyno.application.payee import (
@@ -46,7 +47,7 @@ def test_get_payee_by_name(session: Session):
 
 
 def test_get_payee_by_id_not_found(session: Session):
-    result = get_payee_by_id_from_database(session, 999)
+    result = get_payee_by_id_from_database(session, uuid6.uuid7())
 
     assert result is None
 
