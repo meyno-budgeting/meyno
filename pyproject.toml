@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "ChaoticDefense", email = "supersonicseven@gmail.com" }
 ]
-requires-python = ">=3.14,<3.15"
+requires-python = ">=3.11,<3.15"
 dependencies = [
     "alembic>=1.20,<1.21",
     "pydantic>=2.13.0,<3.0",
@@ -22,6 +22,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "nox",
     "pytest>=9.0,<10.0",
     "pytest-cov>=7.1,<8.0",
     "ruff",
@@ -30,6 +31,7 @@ dev = [
 [tool.ruff]
 # line-length = 120
 extend-exclude = ["alembic"]
+target-version = "py311"
 
 # RUFF DEFAULTS
 # (These are all the default groups, even if you don’t currently select them)

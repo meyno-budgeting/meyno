@@ -1,5 +1,3 @@
-from typing import TYPE_CHECKING
-
 from sqlalchemy.orm import Session
 
 from meyno.application.transaction import (
@@ -13,6 +11,7 @@ from meyno.application.transaction import (
     update_split_in_database,
     update_transaction_in_database,
 )
+from meyno.database.models import Account, Transaction, TransactionSplit
 from meyno.exceptions.transaction import (
     InvalidTransactionError,
     TransactionConversionError,
@@ -27,9 +26,6 @@ from meyno.schemas.transaction import (
     TransferCreate,
 )
 from meyno.utils import controller_write
-
-if TYPE_CHECKING:
-    from meyno.database.models import Account, Transaction, TransactionSplit
 
 
 def add_transaction(

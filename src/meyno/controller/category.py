@@ -1,5 +1,3 @@
-from typing import TYPE_CHECKING
-
 from sqlalchemy.orm import Session
 
 from meyno.application.category import (
@@ -10,15 +8,13 @@ from meyno.application.category import (
     get_category_by_name_from_database,
     update_category_name_in_database,
 )
+from meyno.database.models import Category
 from meyno.exceptions.category import (
     CategoryAlreadyExistsError,
     CategoryNameEmptyError,
     CategoryNotFoundError,
 )
 from meyno.utils import controller_write
-
-if TYPE_CHECKING:
-    from meyno.database.models import Category
 
 
 def _check_category_exists(session: Session, category_name: str) -> None:

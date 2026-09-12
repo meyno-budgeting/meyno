@@ -1,5 +1,3 @@
-from typing import TYPE_CHECKING
-
 from sqlalchemy.orm import Session
 
 from meyno.application.payee import (
@@ -10,15 +8,13 @@ from meyno.application.payee import (
     get_payee_by_name_from_database,
     update_payee_name_in_database,
 )
+from meyno.database.models import Payee
 from meyno.exceptions.payee import (
     PayeeAlreadyExistsError,
     PayeeNameEmptyError,
     PayeeNotFoundError,
 )
 from meyno.utils import controller_write
-
-if TYPE_CHECKING:
-    from meyno.database.models import Payee
 
 
 def _check_payee_exists(session: Session, payee_name: str) -> None:
