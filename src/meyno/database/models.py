@@ -66,11 +66,15 @@ class Payee(Base):
 class Transaction(Base):
     __tablename__ = "transaction"
 
-    transaction_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    transaction_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        primary_key=True,
+        default=uuid6.uuid7,
+    )
 
     date: Mapped[date] = mapped_column(Date, nullable=False)
 
-    account_id: Mapped[int] = mapped_column(
+    account_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey(
             column="account.account_id",
             name="fk_transaction_account",
@@ -78,7 +82,7 @@ class Transaction(Base):
         nullable=False,
     )
 
-    payee_id: Mapped[int | None] = mapped_column(
+    payee_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey(
             column="payee.payee_id",
             name="fk_transaction_payee",
@@ -155,9 +159,9 @@ class TransactionSplit(Base):
     __tablename__ = "transaction_split"
 
     ## Columns
-    transaction_split_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    transaction_split_id: Mapped[uuid.UUID] = mapped_column(Integer, primary_key=True)
 
-    transaction_id: Mapped[int] = mapped_column(
+    transaction_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey(
             "transaction.transaction_id",
             name="fk_transaction_split_transaction",
@@ -165,7 +169,7 @@ class TransactionSplit(Base):
         nullable=False,
     )
 
-    category_id: Mapped[int | None] = mapped_column(
+    category_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey(
             "category.category_id",
             name="fk_transaction_split_category",

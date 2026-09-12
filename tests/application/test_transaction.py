@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+import uuid6
 from sqlalchemy.orm import Session
 
 from meyno.application.account import add_account_to_database
@@ -102,7 +103,7 @@ def test_get_transaction_by_id(session: Session):
 
 
 def test_get_transaction_by_id_not_found(session):
-    result = get_transaction_by_id_from_database(session, 999)
+    result = get_transaction_by_id_from_database(session, uuid6.uuid7())
 
     assert result is None
 
