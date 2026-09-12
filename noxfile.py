@@ -20,6 +20,7 @@ def tests_315(session: nox.Session) -> None:
         "sqlalchemy>=2.0,<2.1",
         "pytest>=9.0,<10.0",
         "pytest-cov>=7.1,<8.0",
+        "uuid6>=2025.0.0",
     )
 
     session.run("pytest")
