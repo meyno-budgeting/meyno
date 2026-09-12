@@ -1,4 +1,5 @@
 import pytest
+import uuid6
 from sqlalchemy.orm import Session
 
 from meyno.controller.account import (
@@ -73,7 +74,7 @@ def test_get_account_by_id(session: Session):
 
 def test_get_account_by_id_not_found(session: Session):
     with pytest.raises(AccountNotFoundError):
-        get_account_by_id(session, 999)
+        get_account_by_id(session, uuid6.uuid7())
 
 
 def test_get_account_by_name(session: Session):

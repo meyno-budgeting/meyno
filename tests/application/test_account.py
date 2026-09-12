@@ -1,5 +1,6 @@
 from datetime import date
 
+import uuid6
 from sqlalchemy.orm import Session
 
 from meyno.application.account import (
@@ -53,7 +54,7 @@ def test_get_account_by_name(session: Session):
 
 
 def test_get_account_by_id_not_found(session: Session):
-    result = get_account_by_id_from_database(session, 999)
+    result = get_account_by_id_from_database(session, uuid6.uuid7())
 
     assert result is None
 

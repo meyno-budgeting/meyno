@@ -1,4 +1,5 @@
 import datetime
+import uuid
 from typing import Self
 
 from pydantic import BaseModel, Field, model_validator
@@ -19,7 +20,7 @@ class TransactionSplitUpdate(BaseModel):
 
 class TransactionCreate(BaseModel):
     date: datetime.date = Field(default_factory=get_local_todays_date)
-    account_id: int
+    account_id: uuid.UUID
     amount: int = 0
     payee_id: int | None = None
     notes: str | None = None
@@ -28,8 +29,8 @@ class TransactionCreate(BaseModel):
 
 class TransferCreate(BaseModel):
     date: datetime.date = Field(default_factory=get_local_todays_date)
-    left_side_account_id: int
-    right_side_account_id: int
+    left_side_account_id: uuid.UUID
+    right_side_account_id: uuid.UUID
     amount: int = 0
     notes: str | None = None
 
@@ -45,7 +46,7 @@ class TransferCreate(BaseModel):
 
 class TransactionUpdate(BaseModel):
     date: datetime.date | None = None
-    account_id: int | None = None
+    account_id: uuid.UUID | None = None
     payee_id: int | None = None
     amount: int | None = None
     notes: str | None = None

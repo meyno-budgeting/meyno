@@ -1,6 +1,7 @@
 from datetime import date
 
 import pytest
+import uuid6
 from sqlalchemy.exc import IntegrityError
 
 from meyno.database.models import (
@@ -395,7 +396,7 @@ def test_foreign_key_violation_for_account(session):
     session.commit()
 
     transaction = Transaction(
-        account_id=999,
+        account_id=uuid6.uuid7(),
         payee_id=payee.payee_id,
         date=date(2026, 8, 18),
         amount=5000,

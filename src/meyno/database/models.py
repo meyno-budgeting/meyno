@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import uuid
 from datetime import date
 
-from sqlalchemy import CheckConstraint, Date, ForeignKey, Integer, String
+import uuid6
+from sqlalchemy import CheckConstraint, Date, ForeignKey, Integer, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from meyno.database.base import Base
@@ -11,7 +13,11 @@ from meyno.database.base import Base
 class Account(Base):
     __tablename__ = "account"
 
-    account_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        primary_key=True,
+        default=uuid6.uuid7,
+    )
     name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
 
     transactions: Mapped[list[Transaction]] = relationship(
