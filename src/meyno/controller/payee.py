@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy.orm import Session
 
 from meyno.application.payee import (
@@ -43,7 +45,7 @@ def add_payee(session: Session, name: str) -> Payee:
         return payee
 
 
-def get_payee_by_id(session: Session, payee_id: int) -> Payee:
+def get_payee_by_id(session: Session, payee_id: uuid.UUID) -> Payee:
     payee = get_payee_by_id_from_database(session, payee_id)
 
     if payee is None:

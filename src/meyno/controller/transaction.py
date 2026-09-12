@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy.orm import Session
 
 from meyno.application.transaction import (
@@ -82,7 +84,9 @@ def add_transfer(session: Session, transfer_data: TransferCreate) -> Transaction
         return left_side
 
 
-def get_transaction_by_id(session: Session, transaction_id: int) -> Transaction | None:
+def get_transaction_by_id(
+    session: Session, transaction_id: uuid.UUID
+) -> Transaction | None:
     transaction = get_transaction_by_id_from_database(session, transaction_id)
 
     if transaction is None:

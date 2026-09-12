@@ -1,3 +1,6 @@
+import uuid
+
+
 class TransactionError(Exception):
     """Base exception for transaction-related errors."""
 
@@ -5,7 +8,7 @@ class TransactionError(Exception):
 class TransactionNotFoundError(TransactionError):
     """Raised when a transaction could not be found"""
 
-    def __init__(self, transaction_id: int) -> None:
+    def __init__(self, transaction_id: uuid.UUID) -> None:
         self.transaction_id = transaction_id
         super().__init__(f"Transaction not found: {transaction_id}")
 

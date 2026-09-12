@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -5,7 +7,7 @@ from meyno.database.models import Account
 
 
 def get_account_by_id_from_database(
-    session: Session, account_id: int
+    session: Session, account_id: uuid.UUID
 ) -> Account | None:
     return session.get(Account, account_id)
 

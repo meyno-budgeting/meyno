@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -44,7 +46,7 @@ def add_account(session: Session, name: str) -> Account:
         return account
 
 
-def get_account_by_id(session: Session, account_id: int) -> Account:
+def get_account_by_id(session: Session, account_id: uuid.UUID) -> Account:
     account = get_account_by_id_from_database(session, account_id)
 
     if account is None:

@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -11,7 +13,7 @@ from meyno.schemas.transaction import (
 
 
 def get_transaction_by_id_from_database(
-    session: Session, transaction_id: int
+    session: Session, transaction_id: uuid.UUID
 ) -> Transaction | None:
     return session.get(Transaction, transaction_id)
 
@@ -102,7 +104,7 @@ def add_split_to_transaction_in_database(
 
 
 def get_split_by_id_from_database(
-    session: Session, split_id: int
+    session: Session, split_id: uuid.UUID
 ) -> TransactionSplit | None:
     return session.get(TransactionSplit, split_id)
 

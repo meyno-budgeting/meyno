@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -5,7 +7,7 @@ from meyno.database.models import Category
 
 
 def get_category_by_id_from_database(
-    session: Session, category_id: int
+    session: Session, category_id: uuid.UUID
 ) -> Category | None:
     return session.get(Category, category_id)
 

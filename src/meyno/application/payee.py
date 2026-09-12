@@ -1,10 +1,14 @@
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from meyno.database.models import Payee
 
 
-def get_payee_by_id_from_database(session: Session, payee_id: int) -> Payee | None:
+def get_payee_by_id_from_database(
+    session: Session, payee_id: uuid.UUID
+) -> Payee | None:
     return session.get(Payee, payee_id)
 
 

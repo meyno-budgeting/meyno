@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy.orm import Session
 
 from meyno.application.category import (
@@ -43,7 +45,7 @@ def add_category(session: Session, name: str) -> Category:
         return category
 
 
-def get_category_by_id(session: Session, category_id: int) -> Category:
+def get_category_by_id(session: Session, category_id: uuid.UUID) -> Category:
     category = get_category_by_id_from_database(session, category_id)
 
     if category is None:
