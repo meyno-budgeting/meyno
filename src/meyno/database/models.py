@@ -96,7 +96,7 @@ class Transaction(Base):
 
     notes: Mapped[str | None] = mapped_column(String(75), nullable=True)
 
-    transfer_transaction_id: Mapped[int | None] = mapped_column(
+    transfer_transaction_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey(
             "transaction.transaction_id",
             name="fk_transaction_transfer",
@@ -159,7 +159,11 @@ class TransactionSplit(Base):
     __tablename__ = "transaction_split"
 
     ## Columns
-    transaction_split_id: Mapped[uuid.UUID] = mapped_column(Integer, primary_key=True)
+    transaction_split_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        primary_key=True,
+        default=uuid6.uuid7,
+    )
 
     transaction_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey(

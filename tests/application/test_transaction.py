@@ -301,7 +301,7 @@ def test_get_transaction_split_by_id(session: Session):
 
 
 def test_get_transaction_split_by_id_not_found(session: Session):
-    assert get_split_by_id_from_database(session, 9999) is None
+    assert get_split_by_id_from_database(session, uuid6.uuid7()) is None
 
 
 @pytest.mark.parametrize(
