@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 from collections.abc import Generator
 from contextlib import contextmanager
 
@@ -15,5 +15,5 @@ def controller_write(session: Session) -> Generator[None]:
         raise
 
 
-def get_local_todays_date() -> datetime.date:
-    return datetime.datetime.now().astimezone().date()
+def get_local_todays_date() -> dt.date:
+    return dt.datetime.now().astimezone().date()

@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 
 import pytest
 from sqlalchemy.orm import Session
@@ -42,7 +42,7 @@ def test_add_transaction(session: Session):
     payee = add_payee(session, "Walmart")
 
     transaction_data = TransactionCreate(
-        date=datetime.date(2026, 8, 25),
+        date=dt.date(2026, 8, 25),
         account_id=account.account_id,
         amount=-5000,
         payee_id=payee.payee_id,
@@ -301,14 +301,14 @@ def test_update_transaction(session: Session):
     )
 
     update = TransactionUpdate(
-        notes="Updated", date=datetime.date(2026, 1, 15), payee_id=new_payee.payee_id
+        notes="Updated", date=dt.date(2026, 1, 15), payee_id=new_payee.payee_id
     )
 
     result = update_transaction(session, transaction, update)
 
     assert result is transaction
     assert transaction.notes == "Updated"
-    assert transaction.date == datetime.date(2026, 1, 15)
+    assert transaction.date == dt.date(2026, 1, 15)
     assert transaction.amount == 1000
     assert transaction.payee is new_payee
 
@@ -381,7 +381,7 @@ def test_update_transfer_left_side(session: Session):
     old_amount = 1000
     new_amount = 2000
     payee = add_payee(session, "Walmart")
-    new_date = datetime.date(2026, 9, 7)
+    new_date = dt.date(2026, 9, 7)
 
     left_side = add_transfer(
         session,
@@ -419,7 +419,7 @@ def test_update_transfer_right_side(session: Session):
     old_amount = 1000
     new_amount = 2000
     payee = add_payee(session, "Walmart")
-    new_date = datetime.date(2026, 9, 7)
+    new_date = dt.date(2026, 9, 7)
 
     left_side = add_transfer(
         session,

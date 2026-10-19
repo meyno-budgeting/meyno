@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 
 import pytest
 import uuid6
@@ -34,7 +34,7 @@ def test_add_transaction_to_database(session: Session):
     session.commit()
 
     transaction_data = TransactionCreate(
-        date=datetime.date(2026, 8, 25),
+        date=dt.date(2026, 8, 25),
         account_id=account.account_id,
         amount=-5000,
         payee_id=payee.payee_id,
@@ -150,7 +150,7 @@ def test_update_transaction_in_database(session: Session):
     session.flush()
 
     update = TransactionUpdate(
-        date=datetime.date(2026, 8, 25),
+        date=dt.date(2026, 8, 25),
         account_id=savings_account.account_id,
         amount=-7500,
         payee_id=new_payee.payee_id,
@@ -188,7 +188,7 @@ def test_delete_transaction_from_database(session: Session):
     session.commit()
 
     transaction_data = TransactionCreate(
-        date=datetime.date(2026, 8, 25),
+        date=dt.date(2026, 8, 25),
         account_id=account.account_id,
         amount=-5000,
         payee_id=payee.payee_id,

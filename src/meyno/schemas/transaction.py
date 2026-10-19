@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import uuid
 from typing import Self
 
@@ -19,7 +19,7 @@ class TransactionSplitUpdate(BaseModel):
 
 
 class TransactionCreate(BaseModel):
-    date: datetime.date = Field(default_factory=get_local_todays_date)
+    date: dt.date = Field(default_factory=get_local_todays_date)
     account_id: uuid.UUID
     amount: int = 0
     payee_id: uuid.UUID | None = None
@@ -28,7 +28,7 @@ class TransactionCreate(BaseModel):
 
 
 class TransferCreate(BaseModel):
-    date: datetime.date = Field(default_factory=get_local_todays_date)
+    date: dt.date = Field(default_factory=get_local_todays_date)
     left_side_account_id: uuid.UUID
     right_side_account_id: uuid.UUID
     amount: int = 0
@@ -45,7 +45,7 @@ class TransferCreate(BaseModel):
 
 
 class TransactionUpdate(BaseModel):
-    date: datetime.date | None = None
+    date: dt.date | None = None
     account_id: uuid.UUID | None = None
     payee_id: uuid.UUID | None = None
     amount: int | None = None
