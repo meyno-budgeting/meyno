@@ -32,7 +32,7 @@ dev = [
 
 [tool.ruff]
 # line-length = 120
-extend-exclude = ["alembic"]
+extend-exclude = ["alembic", "*_ui.py"]
 target-version = "py311"
 
 # RUFF DEFAULTS
