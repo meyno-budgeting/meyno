@@ -2,11 +2,16 @@ from pathlib import Path
 from sqlite3 import Connection
 
 from sqlalchemy import create_engine, event
+from sqlalchemy.engine import URL
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import ConnectionPoolEntry
 
 DATABASE_PATH = Path(__file__).resolve().parents[3] / "meyno.db"
-DATABASE_URL = f"sqlite:////{DATABASE_PATH}"
+
+DATABASE_URL = URL.create(
+    "sqlite",
+    database=str(DATABASE_PATH),
+).render_as_string(hide_password=False)
 
 
 def create_engine_and_session_factory(database_url: str) -> tuple:
